@@ -1,3 +1,6 @@
 [submodule "avr-libc"]
 	path = avr-libc
 	url = https://github.com/avrdudes/avr-libc
+[submodule "openocd"]
+	path = openocd
+	url = https://git.code.sf.net/p/openocd/code
