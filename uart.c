@@ -1,5 +1,3 @@
-
-
 #include "uart.h"
 #include <avr/io.h>
 #include <stdint.h>
