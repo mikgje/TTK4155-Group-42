@@ -13,7 +13,13 @@
 #define BAUD 9600UL
 #define MYUBRR (FOSC/16/BAUD - 1)
 
-char *test = "TEST";
+#define set_bit(reg, bit) (reg |= (1 << bit))    // set bit
+#define clear_bit(reg, bit) (reg &= ~(1 << bit)) // clear bit
+#define test_bit(reg, bit) (reg & (1 << bit))    // read bit
+#define loop_until_bit_is_set(reg, bit) while(!test_bit(reg, bit))
+#define loop_until_bit_is_clear(reg, bit) while(test_bit(reg, bit))
+
+//char *test = "TEST";
 
 int main()
 {
@@ -26,23 +32,30 @@ int main()
 
     xmem_init();
     pwm_init();
+    oled_init();
     // SRAM_test();
     
-    uint8_t* adc_values = (uint8_t *) malloc(6*sizeof(uint8_t));	
 
+
+    uint8_t* adc_values = (uint8_t *) malloc(6*sizeof(uint8_t));	
+    uint8_t* xy_saturation = (uint8_t *) malloc(4*sizeof(uint8_t)); // in order: x_min, x_max, y_min, y_max
+
+    //joystick_configuration(xy_saturation, adc_values);
+    
     while(1) {
 		//uint8_t value = ADC_BASE_ADR[0];
         //printf(value);
-
-		USART_Receive();
-		printf("\nADC Values\r\n");
+        oled_data(0xFF);
+		//USART_Receive();
+		//printf("\nADC Values\n");
         adc_read(adc_values);
-		printf("[%4u, %4u, %4u, %4u, %4u, %4u]\r\n",adc_values[0], adc_values[1], adc_values[2], adc_values[3], adc_values[4], adc_values[5]);
-        
+		//printf("\r Joystick X: %d, Joystick Y: %d\r\n Slider Left: %d, Slider Right: %d\r\n Button Left: %d, Button Right: %d\r\n",adc_values[1], adc_values[0], adc_values[2], adc_values[3], adc_values[4], adc_values[5]);
+        printf("[%d, %d, %d, %d, %d, %d]\r\n", adc_values[1], adc_values[0], adc_values[3], adc_values[2], adc_values[5], adc_values[4]);
     }
 
     free(adc_values);
-	adc_values = NULL;
+    free(xy_saturation);
+}
 
     /*
     while (1)
@@ -59,7 +72,6 @@ int main()
         _delay_ms(1000);
     }
      */
-}
 
 /* Fuse configuration
 avrdude -p m162 -c atmelice -U lfuse:w:0xC1:m 	-U hfuse:w:0x19:m
