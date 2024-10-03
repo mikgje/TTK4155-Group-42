@@ -10,6 +10,7 @@
 #include "xmem.h"
 #include "uart.h"
 #include "adc.h"
+#include "oled.h"
 #define BAUD 9600UL
 #define MYUBRR (FOSC/16/BAUD - 1)
 
@@ -44,6 +45,32 @@ int main()
 
     oled_clear_screen();
 
+    //uint8_t *menu_entries = (uint8_t *) malloc(menu_height*sizeof(uint8_t));
+    uint8_t menu_height = 8;
+    uint8_t menu_width = 128;
+    char **menu = (char **) malloc(menu_width*sizeof(char *));
+    for(uint8_t i = 0; i<menu_width; i++) menu[i] = (char *) malloc(menu_height*sizeof(char));
+
+    menu[0] = ">Option 1";
+    menu[1] = " Option 2";
+    menu[2] = " Option 3";
+    menu[3] = " Option 4";
+    menu[4] = " Option 5";
+    menu[5] = " Option 6";
+    menu[6] = " Option 7";
+    menu[7] = " Option 8";
+
+    oled_draw_menu(menu, menu_height, menu_width);
+    /*
+    oled_set_position(0,0);
+    oled_draw_word_large("Hello World");
+    oled_set_position(0,1);
+    oled_draw_word_large("Hello World");
+    oled_set_position(0,2);
+    oled_draw_word_large("Hello World");
+    */
+
+
     /*
     oled_set_column_address(0);
     oled_set_page_address(0);
@@ -59,21 +86,21 @@ int main()
     while(1) {
 		//uint8_t value = ADC_BASE_ADR[0];
         //printf(value);
-        
+        //printf("%s", menu[0]);
+
 		//USART_Receive();
 		//printf("\nADC Values\n");
-        //adc_read(adc_values);
 		//printf("\r Joystick X: %d, Joystick Y: %d\r\n Slider Left: %d, Slider Right: %d\r\n Button Left: %d, Button Right: %d\r\n",adc_values[1], adc_values[0], adc_values[2], adc_values[3], adc_values[4], adc_values[5]);
         //printf("[%d, %d, %d, %d, %d, %d]\r\n", adc_values[1], adc_values[0], adc_values[3], adc_values[2], adc_values[5], adc_values[4]);
-        
-        //oled_data(0xFF);
-        //_delay_ms(1000);
-        //oled_data(0);
-        //_delay_ms(1000);
+
+        adc_read(adc_values);
+        oled_move_menu(menu, menu_height, menu_width, adc_values);
     }
 
     free(adc_values);
     free(xy_saturation);
+    //free(menu_entries);
+    free(menu);
 }
 
     /*
