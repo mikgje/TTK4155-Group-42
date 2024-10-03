@@ -5,12 +5,12 @@
 
 void oled_command(uint8_t command) {
     volatile char *oled_command_mem = (char*)BASE_OLED_COMMAND_ADDRESS;
-    oled_mem[0] = command;
+    oled_command_mem[0] = command;
 }
 
 void oled_data(char data) {
     volatile char *oled_data_mem = (char*)BASE_OLED_DATA_ADDRESS;
-    oled_mem[0] = data;
+    oled_data_mem[0] = data;
 }
 
 void oled_init() {
@@ -39,3 +39,25 @@ void oled_init() {
     oled_command(0xaf); // display on
 }
 
+void oled_set_column_address(uint8_t value) {
+    // lower and higher nibble can be [0,15]
+    uint8_t lower_nibble = ((value << 4) >> 4); // lower nibble
+    uint8_t higher_nibble = (value >> 4); // higher nibble
+    oled_command(lower_nibble);
+    oled_command(0b00010000+higher_nibble);
+}
+
+// value can be [0,7]
+void oled_set_page_address(uint8_t value) { 
+    oled_command(0b10110000+value);
+}
+
+void oled_clear_screen() {
+    oled_set_column_address(0);
+    for(uint8_t i = 0; i<=7; i++) {
+        oled_set_page_address(i);
+        for(uint8_t i = 0; i<=127; i++) {
+            oled_data(0);
+        }
+    }
+}
