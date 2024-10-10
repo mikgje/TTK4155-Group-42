@@ -22,4 +22,4 @@ void oled_draw_character_small(char ascii_character);
 void oled_draw_word_small(char *ascii_word);
 
 void oled_draw_menu(uint8_t **menu, uint8_t menu_height, uint8_t menu_width);
-void oled_move_menu(uint8_t **menu, uint8_t menu_height, uint8_t menu_width, uint8_t *adc_values);
+uint8_t oled_move_menu(uint8_t **menu, uint8_t menu_height, uint8_t menu_width, uint8_t *adc_values);

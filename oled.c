@@ -112,12 +112,12 @@ void oled_draw_word_small(char *ascii_word) {
 void oled_draw_menu(uint8_t **menu, uint8_t menu_height, uint8_t menu_width) {
     for(uint8_t i = 0; i<menu_height; i++) {
         oled_set_position(0, i);
-        printf("%s\r\n", menu[i]);
+        //printf("%s\r\n", menu[i]);
         oled_draw_word_large(menu[i]);
     }
 }
 
-void oled_move_menu(uint8_t **menu, uint8_t menu_height, uint8_t menu_width, uint8_t *adc_values) {
+uint8_t oled_move_menu(uint8_t **menu, uint8_t menu_height, uint8_t menu_width, uint8_t *adc_values) {
     uint8_t current_position = 0;
     for(uint8_t i = 0; i<menu_height; i++) {
         if(menu[i][0] == '>') {
@@ -129,15 +129,22 @@ void oled_move_menu(uint8_t **menu, uint8_t menu_height, uint8_t menu_width, uin
         if((current_position!=0)) {
             //printf("Valid position: %d. J: %d\r\n", current_position, adc_values[0]);
             menu[current_position][0] = ' ';
-            menu[current_position-1][0] = '>';
+            current_position -= 1;
+            menu[current_position][0] = '>';
         }
     } else if(adc_values[0] < 130) {
         if((current_position!=7)) {
             //printf("Valid position: %d. J: %d\r\n", current_position, adc_values[0]);
             menu[current_position][0] = ' ';
-            menu[current_position+1][0] = '>';
+            current_position += 1;
+            menu[current_position][0] = '>';
         }
     }
     oled_draw_menu(menu, menu_height, menu_width);
     _delay_ms(50);
+    if(adc_values[4] == 1) {
+        return current_position;
+    } else {
+        return 255;
+    }
 }

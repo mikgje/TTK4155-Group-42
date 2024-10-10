@@ -11,6 +11,9 @@
 #include "uart.h"
 #include "adc.h"
 #include "oled.h"
+#include "spi.h"
+#include "can_controller.h"
+
 #define BAUD 9600UL
 #define MYUBRR (FOSC/16/BAUD - 1)
 
@@ -34,6 +37,8 @@ int main()
     xmem_init();
     pwm_init();
     oled_init();
+    spi_init();
+    can_init();
     // SRAM_test();
     
 
@@ -89,12 +94,30 @@ int main()
         //printf("%s", menu[0]);
 
 		//USART_Receive();
-		//printf("\nADC Values\n");
-		//printf("\r Joystick X: %d, Joystick Y: %d\r\n Slider Left: %d, Slider Right: %d\r\n Button Left: %d, Button Right: %d\r\n",adc_values[1], adc_values[0], adc_values[2], adc_values[3], adc_values[4], adc_values[5]);
-        //printf("[%d, %d, %d, %d, %d, %d]\r\n", adc_values[1], adc_values[0], adc_values[3], adc_values[2], adc_values[5], adc_values[4]);
 
-        adc_read(adc_values);
-        oled_move_menu(menu, menu_height, menu_width, adc_values);
+        //adc_read(adc_values);
+        /*
+        This is one the format: Joystick X, Joystick Y, Slider Left, Slider Right, Button Left, Button Right
+        */
+        //printf("[%d, %d, %d, %d, %d, %d] Menu return: %d\r\n", adc_values[1], adc_values[0], adc_values[3], adc_values[2], adc_values[4], adc_values[5], oled_move_menu(menu, menu_height, menu_width, adc_values));
+        printf("Svart\r\n");
+        /*
+        printf("Value 1: %d\r\n", SPI_MasterReceive());
+        spi_transmit_single(12);
+        printf("Value 2: %d\r\n", SPI_MasterReceive());
+        spi_transmit_single(13);
+        printf("Value 3: %d\r\n", SPI_MasterReceive());
+        spi_transmit_single(14);
+        */
+        /*
+        */
+        printf("Value 1: %d\r\n", can_read(0b00110110));
+        can_write(0b00110110, 12);
+        printf("Value 2: %d\r\n", can_read(0b00110110));
+        can_write(0b00110110, 13);
+        printf("Value 3: %d\r\n", can_read(0b00110110));
+        can_write(0b00110110, 11);
+        _delay_ms(1000);
     }
 
     free(adc_values);
