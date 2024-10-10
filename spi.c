@@ -47,7 +47,3 @@ uint8_t spi_receive() {
     spi_transmit(255);
     return SPDR;
 }
-
-uint8_t spi_read() {
-    return SPDR;
-}
