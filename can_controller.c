@@ -48,10 +48,31 @@ PS2 > SJW
 /*wake up filter, 1 enabled, 0 disabled*/
 #define WAKFIL 0
 
+/* commands */
+#define RESET 0b11000000
+#define READ 0b00000011
+#define WRITE 0b00000010
+#define RTS_BASE 0b10000000
+#define READ_STATUS 0b10100000
+#define BIT_MODIFY 0b00000101
+
+/* can controller registers */
+#define CNF1 0b00101010
+#define CNF2 0b00101001
+#define CNF3 0b00101000
+#define TXB0CTRL 0b00110000
+#define TXB0SIDH 0b00110001
+#define TXB0SIDL 0b00110010
+#define TXB0DLC 0b00110101
+#define RXB0CTRL 0b01100000
+#define TXB0CANCTRL 0b00111111
+#define RXB0CANCTRL 0b01101111
+#define CANINTF 0b00101100
+
 void can_reset() {
     /*reset mcp2515*/
     clear_bit(SPI,PINSS);
-    spi_transmit(0b11000000);
+    spi_transmit(RESET);
     set_bit(SPI, PINSS);
 }
 
@@ -67,7 +88,7 @@ uint8_t can_read(uint8_t address) {
     clear_bit(SPI, PINSS);
 
     /*transmit instruction*/
-    spi_transmit(0b00000011);
+    spi_transmit(READ);
     /*transmit address*/
     spi_transmit(address);
     uint8_t retval = spi_receive();
@@ -81,7 +102,7 @@ void can_write(uint8_t address, uint8_t data){
     clear_bit(SPI, PINSS);
 
     /*transmit instruction*/
-    spi_transmit(0b00000010);
+    spi_transmit(WRITE);
     /*transmit address*/
     spi_transmit(address);
     /*transmit data*/
@@ -91,33 +112,30 @@ void can_write(uint8_t address, uint8_t data){
 }
 
 void can_config() {
-    uint8_t CNF1_ADR = 0b00101010;
-    uint8_t CNF2_ADR = 0b00101001;
-    uint8_t CNF3_ADR = 0b00101000;
-    uint8_t CNF1 = 0;
-    uint8_t CNF2 = 0;
-    uint8_t CNF3 = 0;
+    uint8_t CNF1_data = 0;
+    uint8_t CNF2_data = 0;
+    uint8_t CNF3_data = 0;
 
-    CNF1 = (SJW << 6) | (BRP);
-    CNF2 = (BTLMODE << 7) | (SAM << 6) | (PS1 << 3) | (PRSEG);
-    CNF3 = (SOF << 7) | (WAKFIL << 6) & ~(0b111 << 3) | (PS2);
+    CNF1_data = (SJW << 6) | (BRP);
+    CNF2_data = (BTLMODE << 7) | (SAM << 6) | (PS1 << 3) | (PRSEG);
+    CNF3_data = (SOF << 7) | (WAKFIL << 6) & ~(0b111 << 3) | (PS2);
 
-    can_write(CNF1_ADR, CNF1);
-    can_write(CNF2_ADR, CNF2);
-    can_write(CNF3_ADR, CNF3);
+    can_write(CNF1, CNF1_data);
+    can_write(CNF2, CNF2_data);
+    can_write(CNF3, CNF3_data);
 }
 
 void can_request_to_send(uint8_t txb0, uint8_t txb1, uint8_t txb2) {
     /*rts for specified tx buffer if value is 1*/
-    spi_transmit((0b10000000) | (txb2 << 2) | (txb1 << 1) | (txb0));
+    spi_transmit((RTS_BASE) | (txb2 << 2) | (txb1 << 1) | (txb0));
 }
 
 uint8_t can_read_status() {
     clear_bit(SPI, PINSS);
 
     /*transmit instruction*/
-    spi_transmit(0b10100000);
-    /*transmit junk byte*/
+    spi_transmit(READ_STATUS);
+    /*transmit junk byte and read shift register*/
     uint8_t retval = spi_receive();
     /*transmit junk byte*/
     spi_transmit(255);
@@ -132,7 +150,7 @@ void can_bit_modify(uint8_t address, uint8_t mask, uint8_t data) {
     clear_bit(SPI, PINSS);
 
     /* send bit modify command*/
-    spi_transmit(0b00000101);
+    spi_transmit(BIT_MODIFY);
     /*transmit address*/
     spi_transmit(address);
     /*transmit mask*/
@@ -141,4 +159,48 @@ void can_bit_modify(uint8_t address, uint8_t mask, uint8_t data) {
     spi_transmit(data);
 
     set_bit(SPI, PINSS);
+}
+
+void can_configure_transmit() {
+    can_bit_modify(TXB0CTRL, 0b00000011, 0b00000011); // set tx to have highest message priority
+    can_write(TXB0SIDH, 0b00000000); // tx buffer 0 high byte id
+    can_write(TXB0SIDL, 0b00000000); // tx buffer 0 low byte id and extended identifier enable and value
+    can_write(TXB0DLC, 0b00001000); // tx is a data frame and consists of 8 bytes 
+}
+
+void can_configure_receive() {
+    can_bit_modify(RXB0CTRL, 0b01100000, 0b01100000); // receive any message
+}
+
+void can_set_loopback(void){
+    // set CANCTRL register to 010 = Set Loopback mode
+    can_bit_modify(TXB0CANCTRL, 0b11100000, 0b01000000); // TXB0 to loopback mode in CANCTRL
+    can_bit_modify(RXB0CANCTRL, 0b11100000, 0b01000000); // RXB0 to loopback mode in CANCTRL
+}
+
+void can_transmit_message(struct can_message *tx_buffer) {
+    can_write(tx_buffer->buffer_start_address+6, tx_buffer->data0);
+    can_write(tx_buffer->buffer_start_address+7, tx_buffer->data1);
+    can_write(tx_buffer->buffer_start_address+8, tx_buffer->data2);
+    can_write(tx_buffer->buffer_start_address+9, tx_buffer->data3);
+    can_write(tx_buffer->buffer_start_address+10, tx_buffer->data4);
+    can_write(tx_buffer->buffer_start_address+11, tx_buffer->data5);
+    can_write(tx_buffer->buffer_start_address+12, tx_buffer->data6);
+    can_write(tx_buffer->buffer_start_address+13, tx_buffer->data7);
+    // request to send TX0
+    can_request_to_send(1, 0, 0); // uint8_t txb0, uint8_t txb1, uint8_t txb2
+}
+
+void can_receive_message(struct can_message *rx_buffer) {
+    // reads RXB0 data registers
+    rx_buffer->data0 = can_read(rx_buffer->buffer_start_address+6);
+    rx_buffer->data1 = can_read(rx_buffer->buffer_start_address+7);
+    rx_buffer->data2 = can_read(rx_buffer->buffer_start_address+8);
+    rx_buffer->data3 = can_read(rx_buffer->buffer_start_address+9);
+    rx_buffer->data4 = can_read(rx_buffer->buffer_start_address+10);
+    rx_buffer->data5 = can_read(rx_buffer->buffer_start_address+11);
+    rx_buffer->data6 = can_read(rx_buffer->buffer_start_address+12);
+    rx_buffer->data7 = can_read(rx_buffer->buffer_start_address+13);
+
+    can_bit_modify(CANINTF, 0b00000001, 0b00000000); // mark rx0 buffer available for new buffer
 }
