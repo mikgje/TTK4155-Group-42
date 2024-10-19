@@ -21,7 +21,7 @@
 #define PINMOSI PINB5
 #define PINSS PINB4
 
-void spi_init() {
+uint8_t spi_init() {
     /*set MOSI and SCK output, all others input*/
     //DDR_SPI = (1<<DD_MOSI)|(1<<DD_SCK);
     set_bit(DDRSPI, DDMOSI);
@@ -32,6 +32,8 @@ void spi_init() {
     set_bit(SPCR, SPR0);
     /*set data order msb transferred first*/
     clear_bit(SPCR, DORD);
+
+    return 0;
 }
 
 

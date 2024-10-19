@@ -14,7 +14,7 @@ void oled_data(char data) {
     oled_data_mem[0] = data;
 }
 
-void oled_init() {
+uint8_t oled_init() {
     // Command
     oled_command(0xae); // display off
     oled_command(0xa1); // segment remap
@@ -38,6 +38,8 @@ void oled_init() {
     oled_command(0xa4); // out follows RAM content
     oled_command(0xa6); // set normal display
     oled_command(0xaf); // display on
+
+    return 0;
 }
 
 void oled_set_column_address(uint8_t value) {

@@ -9,7 +9,7 @@
 
 //volatile char *ADC_BASE_ADR = (char *)0x1400; // Start address for the ADC
 
-void pwm_init() {
+uint8_t pwm_init() {
     //configures PD5 as output and PB0, PB1 and PD4 as input
 	set_bit(DDRD, DDD5); // PWM CLK signal
 	clear_bit(DDRD, DDD4); // Busy signal
@@ -36,6 +36,8 @@ void pwm_init() {
     // register for top value
     ICR1 = 3;
     OCR1A = 1;
+
+	return 0;
 }
 
 void adc_read(uint8_t *adc_values) {
@@ -57,25 +59,25 @@ void adc_read(uint8_t *adc_values) {
 
 void joystick_configuration(uint8_t *xy_saturation, uint8_t *adc_values) {
 	printf("\r\nStarting configuration. Press any key to continue.\r\n");
-	USART_Receive();
+	uart_receive();
 	_delay_ms(500);
 	printf("Hold joystick to the far left and then press any key.\r\n");
-	USART_Receive();
+	uart_receive();
 	adc_read(adc_values);
 	xy_saturation[0] = adc_values[0];
 	_delay_ms(500);
 	printf("Hold joystick to the far right and then press any key.\r\n");
-	USART_Receive();
+	uart_receive();
 	adc_read(adc_values);
 	xy_saturation[1] = adc_values[0];
 	_delay_ms(500);
 	printf("Hold joystick to the far top and then press any key.\r\n");
-	USART_Receive();
+	uart_receive();
 	adc_read(adc_values);
 	xy_saturation[2] = adc_values[1];
 	_delay_ms(500);
 	printf("Hold joystick to the far bottom and then press any key.\r\n");
-	USART_Receive();
+	uart_receive();
 	adc_read(adc_values);
 	xy_saturation[3] = adc_values[1];
 	_delay_ms(500);

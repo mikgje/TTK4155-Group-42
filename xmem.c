@@ -2,9 +2,11 @@
 
 #define BASE_ADDRESS 0x1000
 
-void xmem_init ( void ) {
+uint8_t xmem_init ( void ) {
     MCUCR |= (1 << SRE); // enable XMEM
     SFIOR |= (1 << XMM0); // mask bits / reduce bus width
+
+    return 0;
 }
 
 void xmem_write (uint8_t data, uint16_t addr) {

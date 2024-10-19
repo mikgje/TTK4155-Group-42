@@ -49,25 +49,31 @@ PS2 > SJW
 #define WAKFIL 0
 
 /* commands */
-#define RESET 0b11000000
-#define READ 0b00000011
-#define WRITE 0b00000010
-#define RTS_BASE 0b10000000
+#define RESET       0b11000000
+#define READ        0b00000011
+#define WRITE       0b00000010
+#define RTS_BASE    0b10000000
 #define READ_STATUS 0b10100000
-#define BIT_MODIFY 0b00000101
+#define BIT_MODIFY  0b00000101
 
 /* can controller registers */
-#define CNF1 0b00101010
-#define CNF2 0b00101001
-#define CNF3 0b00101000
-#define TXB0CTRL 0b00110000
-#define TXB0SIDH 0b00110001
-#define TXB0SIDL 0b00110010
-#define TXB0DLC 0b00110101
-#define RXB0CTRL 0b01100000
+#define CNF1        0b00101010
+#define CNF2        0b00101001
+#define CNF3        0b00101000
+#define TXB0CTRL    0b00110000
+#define TXB0SIDH    0b00110001
+#define TXB0SIDL    0b00110010
+#define TXB0DLC     0b00110101
+#define RXB0CTRL    0b01100000
 #define TXB0CANCTRL 0b00111111
 #define RXB0CANCTRL 0b01101111
-#define CANINTF 0b00101100
+#define CANINTF     0b00101100
+#define RXF0SIDH    0b00000000
+#define RXF0SIDL    0b00000001
+#define RXF1SIDH    0b00000100
+#define RXF1SIDL    0b00000101
+#define RXM0SIDH    0b00100000
+#define RXM0SIDL    0b00100001
 
 void can_reset() {
     /*reset mcp2515*/
@@ -76,12 +82,19 @@ void can_reset() {
     set_bit(SPI, PINSS);
 }
 
-void can_init() {
+uint8_t can_init() {
     /*set SS output*/
     set_bit(DDRSPI, DDSS); 
     set_bit(SPCR, SPE);
 
     can_reset();
+
+    if((can_read(0b00001110) & 0b11100000) != 0b10000000) {
+        printf("MCP2515 is not in config mode after reset\r\n");
+        return 1;
+    } 
+
+    return 0;
 }
 
 uint8_t can_read(uint8_t address) { 
@@ -169,7 +182,21 @@ void can_configure_transmit() {
 }
 
 void can_configure_receive() {
-    can_bit_modify(RXB0CTRL, 0b01100000, 0b01100000); // receive any message
+    can_bit_modify(RXB0CTRL, 0b01100000, 0b00100000); // receive only valid messages with standard identifiers that meet filter criteria
+    // NB: currently set to accept all messages
+}
+
+/*refer to mcp2515 table 4-2 and figure 12-1 for usage of mask*/
+void can_configure_filters_and_masks() {
+    // filter rxf0 accepts all message ids, applied to only standard frames
+    can_write(RXF0SIDH, 0b11111111);
+    can_write(RXF0SIDL, 0b11100000);
+    // filter rxf1 accepts all message ids, applied to only standard frames
+    can_write(RXF1SIDH, 0b11111111);
+    can_write(RXF1SIDL, 0b11100000);
+    // mask rxm0 accepts all message ids, applied to only standard frames
+    can_write(RXM0SIDH, 0b11111111);
+    can_write(RXM0SIDL, 0b11100000);
 }
 
 void can_set_loopback(void){
@@ -179,28 +206,39 @@ void can_set_loopback(void){
 }
 
 void can_transmit_message(struct can_message *tx_buffer) {
-    can_write(tx_buffer->buffer_start_address+6, tx_buffer->data0);
-    can_write(tx_buffer->buffer_start_address+7, tx_buffer->data1);
-    can_write(tx_buffer->buffer_start_address+8, tx_buffer->data2);
-    can_write(tx_buffer->buffer_start_address+9, tx_buffer->data3);
-    can_write(tx_buffer->buffer_start_address+10, tx_buffer->data4);
-    can_write(tx_buffer->buffer_start_address+11, tx_buffer->data5);
-    can_write(tx_buffer->buffer_start_address+12, tx_buffer->data6);
-    can_write(tx_buffer->buffer_start_address+13, tx_buffer->data7);
+    // configure control register, message id and data length
+    can_configure_transmit();
+    // write TXB0 data registers 
+    can_write((tx_buffer->buffer_start_address)+6, tx_buffer->data0);
+    can_write((tx_buffer->buffer_start_address)+7, tx_buffer->data1);
+    can_write((tx_buffer->buffer_start_address)+8, tx_buffer->data2);
+    can_write((tx_buffer->buffer_start_address)+9, tx_buffer->data3);
+    can_write((tx_buffer->buffer_start_address)+10, tx_buffer->data4);
+    can_write((tx_buffer->buffer_start_address)+11, tx_buffer->data5);
+    can_write((tx_buffer->buffer_start_address)+12, tx_buffer->data6);
+    can_write((tx_buffer->buffer_start_address)+13, tx_buffer->data7);
     // request to send TX0
+    can_bit_modify(TXB0CTRL, 0b00001000, 0b00001000); // set TXB0CTRL.TXREQ = 1
     can_request_to_send(1, 0, 0); // uint8_t txb0, uint8_t txb1, uint8_t txb2
 }
 
 void can_receive_message(struct can_message *rx_buffer) {
-    // reads RXB0 data registers
-    rx_buffer->data0 = can_read(rx_buffer->buffer_start_address+6);
-    rx_buffer->data1 = can_read(rx_buffer->buffer_start_address+7);
-    rx_buffer->data2 = can_read(rx_buffer->buffer_start_address+8);
-    rx_buffer->data3 = can_read(rx_buffer->buffer_start_address+9);
-    rx_buffer->data4 = can_read(rx_buffer->buffer_start_address+10);
-    rx_buffer->data5 = can_read(rx_buffer->buffer_start_address+11);
-    rx_buffer->data6 = can_read(rx_buffer->buffer_start_address+12);
-    rx_buffer->data7 = can_read(rx_buffer->buffer_start_address+13);
+    // configure control register
+    can_configure_receive();
+    // read RXB0 id registers
+    rx_buffer->message_id_high = can_read((rx_buffer->buffer_start_address)+1);
+    rx_buffer->message_id_low = can_read((rx_buffer->buffer_start_address)+2);
+    // read RXB0 data length
+    rx_buffer->data_length = can_read((rx_buffer->buffer_start_address)+5);
+    // read RXB0 data registers
+    rx_buffer->data0 = can_read((rx_buffer->buffer_start_address)+6);
+    rx_buffer->data1 = can_read((rx_buffer->buffer_start_address)+7);
+    rx_buffer->data2 = can_read((rx_buffer->buffer_start_address)+8);
+    rx_buffer->data3 = can_read((rx_buffer->buffer_start_address)+9);
+    rx_buffer->data4 = can_read((rx_buffer->buffer_start_address)+10);
+    rx_buffer->data5 = can_read((rx_buffer->buffer_start_address)+11);
+    rx_buffer->data6 = can_read((rx_buffer->buffer_start_address)+12);
+    rx_buffer->data7 = can_read((rx_buffer->buffer_start_address)+13);
 
     can_bit_modify(CANINTF, 0b00000001, 0b00000000); // mark rx0 buffer available for new buffer
 }
