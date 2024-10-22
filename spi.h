@@ -1,3 +1,3 @@
-uint8_t spi_init();
-void spi_transmit(uint8_t cData);
-uint8_t spi_receive();
+uint8_t spi_init(void);
+void spi_transmit(uint8_t data);
+uint8_t spi_receive(void);

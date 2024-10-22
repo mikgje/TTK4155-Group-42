@@ -1,29 +1,19 @@
-void can_reset();
-uint8_t can_init();
-void can_config();
+void can_reset(void);
+uint8_t can_init(void);
+void can_config(void);
 uint8_t can_read(uint8_t address);
 void can_write(uint8_t address, uint8_t data);
-uint8_t can_read_status();
+uint8_t can_read_status(void);
 void can_bit_modify(uint8_t address, uint8_t mask, uint8_t data);
-void can_configure_transmit();
-void can_configure_receive();
-void can_configure_filters_and_masks();
+void can_configure_transmit(void);
+void can_configure_receive(void);
+void can_configure_filters_and_masks(void);
 void can_set_loopback(void);
 
 struct can_message {
-    volatile uint8_t buffer_start_address;
-    volatile uint8_t message_id_high;
-    volatile uint8_t message_id_low;
-    volatile uint8_t data_length;
-    volatile uint8_t data0;
-    volatile uint8_t data1;
-    volatile uint8_t data2;
-    volatile uint8_t data3;
-    volatile uint8_t data4;
-    volatile uint8_t data5;
-    volatile uint8_t data6;
-    volatile uint8_t data7;
+    volatile uint8_t buffer_start_address, message_id_high, message_id_low, data_length;
+    volatile uint8_t data0, data1, data2, data3, data4, data5, data6, data7;
 };
 
-void can_send_message(struct can_message *tx_buffer);
-void can_receive_message(struct can_message *rx_buffer);
+void can_send_message(struct can_message* tx_buffer);
+void can_receive_message(struct can_message* rx_buffer);

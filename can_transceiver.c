@@ -1,5 +1,4 @@
 #include <stdint.h>
-
 #include "can_transceiver.h"
 #include "can_controller.h"
 
