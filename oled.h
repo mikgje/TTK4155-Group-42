@@ -1,3 +1,5 @@
+#include <stdint.h>
+
 #define FOSC 4915200UL // clock speed
 #define F_CPU 4915200  // clock speed
 

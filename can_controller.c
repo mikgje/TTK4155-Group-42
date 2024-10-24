@@ -194,7 +194,7 @@ void can_configure_transmit(void) {
 
 void can_configure_receive(void) {
     /* Receive only valid messages with standard identifiers and that meet the filter criteria */
-    can_bit_modify(RXB0CTRL, 0b01100000, 0b00100000);
+    can_bit_modify(RXB0CTRL, 0b01100000, 0b01100000);
     /* NB: Currently set to accept all messages */
 }
 

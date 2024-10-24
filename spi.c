@@ -21,13 +21,13 @@
 #define PINSS PINB4
 
 uint8_t spi_init(void) {
-    /* set MOSI and SCK output, all others input */
+    /* Set MOSI and SCK output, all others input */
     set_bit(DDRSPI, DDMOSI);
     set_bit(DDRSPI, DDSCK);
-    /* enable SPI, Master, set clock rate fck/16 */
+    /* Enable SPI, Master, set clock rate fck/16 */
     set_bit(SPCR, MSTR);
     set_bit(SPCR, SPR0);
-    /* set data order msb transferred first */
+    /* Set data order msb transferred first */
     clear_bit(SPCR, DORD);
 
     return 0;
@@ -35,14 +35,14 @@ uint8_t spi_init(void) {
 
 
 void spi_transmit(uint8_t data) {
-    /* start transmission */
+    /* Start transmission */
     SPDR = data;
-    /* wait for transmission to complete */
+    /* Wait for transmission to complete */
     while (!(SPSR & (1<<SPIF)));
 }
 
 uint8_t spi_receive(void) {
-    /* transmit junk byte */
+    /* Transmit junk byte */
     spi_transmit(255);
     
     return SPDR;

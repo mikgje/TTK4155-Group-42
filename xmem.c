@@ -5,9 +5,9 @@
 #define BASE_ADDRESS 0x1000
 
 uint8_t xmem_init(void) {
-    /* enable XMEM */
+    /* Enable XMEM */
     MCUCR |= (1 << SRE);
-    /* mask bits / reduce bus width */
+    /* Mask bits / reduce bus width */
     SFIOR |= (1 << XMM0);
 
     return 0;

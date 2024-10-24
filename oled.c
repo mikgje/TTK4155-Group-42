@@ -70,7 +70,9 @@ void oled_clear_screen(void) {
     oled_set_column_address(0);
     for (uint8_t i = 0; i<=7; ++i) {
         oled_set_page_address(i);
-        for (uint8_t i = 0; i<=127; ++i) oled_data(0);}
+        for (uint8_t i = 0; i<=127; ++i) {
+            oled_data(0);
+        }
     }
 }
 
