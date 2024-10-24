@@ -1,0 +1,505 @@
+/* Copyright (c) 2007  Eric B. Weddington
+   All rights reserved.
+
+   Redistribution and use in source and binary forms, with or without
+   modification, are permitted provided that the following conditions are met:
+
+   * Redistributions of source code must retain the above copyright
+     notice, this list of conditions and the following disclaimer.
+   * Redistributions in binary form must reproduce the above copyright
+     notice, this list of conditions and the following disclaimer in
+     the documentation and/or other materials provided with the
+     distribution.
+   * Neither the name of the copyright holders nor the names of
+     contributors may be used to endorse or promote products derived
+     from this software without specific prior written permission.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+  POSSIBILITY OF SUCH DAMAGE. */
+
+/* $Id$ */
+
+/**
+
+\page pgmspace Data in Program Space
+
+\section pgmspace_introduction Introduction
+
+So you have some constant data and you're running out of room to store it?
+Many AVRs have limited amount of RAM in which to store data, but may have
+more Flash space available. The AVR is a Harvard architecture processor,
+where Flash is used for the program, RAM is used for data, and they each
+have separate address spaces. It is a challenge to get constant data to be
+stored in the Program Space, and to retrieve that data to use it in the
+AVR application.
+
+The problem is exacerbated by the fact that the C Language was not designed
+for Harvard architectures, it was designed for Von Neumann architectures where
+code and data exist in the same address space. This means that any compiler
+for a Harvard architecture processor, like the AVR, has to use other means to
+operate with separate address spaces.
+
+GCC has a special keyword, \c __attribute__ that is used to attach
+different attributes to things such as function declarations, variables, and
+types. This keyword is followed by an attribute specification in double
+parentheses. In AVR GCC, there is a special attribute called \c progmem. This
+attribute is use on data declarations, and tells the compiler to place
+the data in the Program Memory (Flash).
+
+AVR-LibC provides a simple macro \c PROGMEM that is defined as the attribute
+syntax of GCC with the \c __progmem__ attribute. The \c PROGMEM macro is
+defined in the \c <avr/pgmspace.h> system header file which also provides
+macros and inline functions to access auch data.
+
+An alternative approach is taken by named address-spaces like \c __flash
+as proposed by the N1275 draft to the ISO/IEC DTR 18037 "Embedded C"
+specification.
+Named address-spaces are supported in \c avr-gcc since v4.7 as part of the
+GNU-C99 language dialect (\c -std=gnu99 and up), see the
+<a href="https://gcc.gnu.org/onlinedocs/gcc/Named-Address-Spaces.html"
+   >avr-gcc documentation</a>.
+
+
+\section pgmspace_const Why is GCC putting const Data into RAM to begin with?
+
+From a technical point of view, GCC is putting constant data in
+static storage<sup>\ref foot_cpp_const "1"</sup>
+into the  \ref sec_input ".rodata input section",
+as opposed to non-const data which is put into <tt>.data</tt> or <tt>.bss</tt>.
+But the question is then:
+Why is the \ref sec_ld_script_blocks "linker (script)"
+putting the <tt>.rodata</tt> sections into RAM?
+In order to better understand this, take the following code:
+\code
+#include <stdbool.h>
+
+extern const char c_one;
+extern char c_two;
+
+bool is_one (const char *pc)
+{
+    return *pc == '1';
+}
+
+int test1 (void)
+{
+    if (is_one (&c_one))
+        return 1;
+    else if (is_one (&c_two))
+        return 2;
+    else
+        return 0;
+}
+\endcode
+
+This is a completely valid C99 compilation unit.
+
+Function \c is_one takes a <tt>const char*</tt> pointer argument because it
+is just reading through \c pc and does not modify the pointed-to object.
+Without the \c const qualifier for the pointed-to object it was not
+possible to use the function with constant pointers like <tt>&c_one</tt>,
+because the code would no more be const-correct.
+
+Moreover, it is completely fine to pass the address of a non-const object
+like <tt>&c_two</tt> to a function that won't change the pointed-to object,
+and hence takes a pointer-to-const.
+
+The big question in now: What assembly / machine code should a compiler
+generate for \c is_one()?
+
+<ul>
+<li>AVR GCC is using <tt>LD(pc)</tt> in order to read <tt>*pc</tt>:
+\verbatim
+is_one:
+    movw r30, r24  ; move pc from r25:r24 to Z
+    ldi  r24, 1    ; return value := true
+    ld   r25, Z    ; r25 := *Z using LD
+    cpi  r25, '1'  ; is r25 == '1' ?
+    breq .L2       ; yes: then goto return
+    ldi  r24, 0    ; no:  then return value := false
+.L2:
+    ret            ; return value (r24)
+\endverbatim
+
+This works when \c c_one and \c c_two are located in
+RAM<sup>\ref foot_cpp_const "2"</sup>, so that the \c LD instruction can be
+used.</li>
+<li>A different approach would be to use <tt>LD(pc)</tt> when <tt>*pc</tt>
+  is located in RAM, and <tt>LPM(pc)</tt> when <tt>*pc</tt> is located in
+  flash; something like:
+  \verbatim
+if is_ram_pointer(pc)
+    r25 = LD(pc)
+else
+    r25 = LPM(pc)
+  \endverbatim
+  The drawbacks are obvious: Such code is expensive, because it has to
+  discriminate at run-time whether \c pc points to RAM or to flash.
+  Plus, there must be some means to tell which kind of pointer
+  \c pc actually is.  For example, the high bit of the address could be used
+  to encode the information.
+
+  This approach is taken by <tt>avr-gcc</tt>'s named address-space \c __memx,
+  which uses 24-bit pointers and encodes the information in the high byte.
+</li>
+</ul>
+
+So when the compiler takes the first approach of always using \c LD,
+what will happen when we put \c is_one in PROGMEM?
+
+The code will just not work!<sup>\ref foot_progmem_rtiny "3"</sup>
+
+To use \c is_one() for pointers to RAM as well as pointers to progmem
+(or \c __flash for that matter), \c is_one() needs a second argument that
+tells which kind of pointer is being passed, and it has to adjust the code
+accordingly; something like:
+\code
+#include <stdbool.h>
+#include <avr/pgmspace.h>
+
+bool is_one (const char *pc, bool is_ram_addr)
+{
+    char c = is_ram_addr
+        ? pgm_read_char (pc)
+        : *pc;
+
+    return c == '1';
+}
+\endcode
+
+Notes
+
+-# \anchor foot_cpp_const In C++, const static storage data might be written
+to. For example, in
+\code
+volatile int vi;
+const int i2 = vi;
+\endcode
+the variable \c i2 is read-only for the C++ program,
+but \c i2 must not be put into <tt>.rodata</tt> because it cannot be
+initialized at load-time.  Due to its initializer that is not computable at
+load-time, \c i2 has to be put into RAM and will be initialized (written to)
+at run-time by the startup code. \c avr-g++ will diagnose when an attempt is
+made to put \c i2 in PROGMEM.
+
+-# \anchor foor_ram_addrspace More precisely, these variables have to be
+located in the RAM <em>address space</em> for the code to work.
+For example, some AVR devices see (a part of) the program memory in the
+RAM address space, and hence can use the LD instruction to access porgram
+memory.<br>
+For example, an ATmega3208 sees the program memory range of
+0x0...0x7fff in the RAM address space at addresses 0x4000...0xbfff.
+So all the linker script has to do is to provide an appropriate
+\ref sec_vma "VMA" of 0x4000+\ref sec_lma "LMA" for <tt>.rodata</tt> objects.
+This is the case for devices from the
+<a href="https://gcc.gnu.org/onlinedocs/gcc/AVR-Options.html#avrxmega3"
+   >avrxmega3</a> and
+<a href="https://gcc.gnu.org/onlinedocs/gcc/AVR-Options.html#avrtiny"
+   >avrtiny</a> families.
+Since
+<a href="https://gcc.gnu.org/gcc-14/changes.html#avr"
+  >GCC v14</a> / Binutils v2.42 it is also the case for
+<a href="https://gcc.gnu.org/onlinedocs/gcc/AVR-Options.html#avrxmega2"
+   >AVR64</a> and
+<a href="https://gcc.gnu.org/onlinedocs/gcc/AVR-Options.html#avrxmega4"
+   >AVR128</a> devices when they use the default
+\c avrxmega2_flmap or \c avrxmega4_flmap emulation,
+i.e. without <tt>-mrodata-in-ram</tt>.
+
+-# \anchor foot_progmem_rtiny The code does actually work for Reduced Tiny
+devices because the compiler is implementing attribute \c progmem in a
+different way for the reduced core. See the
+<a href="https://gcc.gnu.org/onlinedocs/gcc/AVR-Variable-Attributes.html"
+   >GCC documentation on <tt>progmem</tt></a>.
+
+
+\section pgmspace_data Storing and Retrieving Data in the Program Space
+
+\subsection pgmspace_data_progmem With Attribute PROGMEM and pgm_read() Functions
+
+Let's say you have some global data:
+
+\code
+char mydata[2][8] =
+{
+    { 2, 3, 5,  7, 11, 13, 17, 19 },
+    { 1, 4, 9, 16, 25, 36, 49, 64 }
+};
+\endcode
+
+and later in your code you access this data in a function and store a single
+byte into a variable \c value like so:
+
+\code
+char value = mydata[i][j];
+\endcode
+
+Now you want to store your data in Program Memory. Use the \c PROGMEM macro
+found in \c <avr/pgmspace.h> and put it after the declaration of the variable,
+but before the initializer, like so:
+
+\code
+#include <avr/pgmspace.h>
+
+const char mydata[2][8] PROGMEM =
+{
+    { 2, 3, 5,  7, 11, 13, 17, 19 },
+    { 1, 4, 9, 16, 25, 36, 49, 64 }
+};
+\endcode
+
+That's it! Now your data is in the Program Space. You can compile, link, and
+check the map file to verify that \c mydata is placed in the correct section.
+
+Now that your data resides in the Program Space, your code to access (read)
+the data will no longer work. The code that gets generated will retrieve the
+data that is located at the address of the \c mydata array, plus offsets
+indexed by the \c i and \c j variables. However, the final address that is
+calculated where to the retrieve the data points to the Data Space! Not the
+Program Space where the data is actually located. It is likely that you will
+be retrieving some garbage. The problem is that AVR GCC does not intrinsically
+know that the data resides in the Program Space.
+
+The solution is fairly simple. The "rule of thumb" for accessing data stored
+in the Program Space is to access the data as you normally would (as if the
+variable is stored in Data Space), like so:
+
+\code
+char value = mydata[i][j];
+\endcode
+
+then take the address of the data:
+
+\code
+... &(mydata[i][j]);
+\endcode
+
+then use the appropriate \c pgm_read_* function, and the address of your data
+becomes the parameter to that function:
+
+\code
+char value = pgm_read_char (&(mydata[i][j]));
+\endcode
+
+The \c pgm_read_* functions take an address that points to the Program Space,
+and
+retrieves the data that is stored at that address. This is why you take the
+address of the offset into the array. This address becomes the parameter to the
+function so it can generate the correct code to retrieve the data from the
+Program Space.
+There are different \c pgm_read_* functions to read different types of data
+at the address given.
+
+\subsection pgmspace_data_flash With Named Address-Space __flash
+
+The same code in terms of address-space \c __flash is:
+
+\code
+const __flash char mydata[2][8] =
+{
+    { 2, 3, 5,  7, 11, 13, 17, 19 },
+    { 1, 4, 9, 16, 25, 36, 49, 64 }
+};
+\endcode
+
+In order to read from \c mydata, no special code is required:
+\code
+char value = mydata[i][j];
+\endcode
+
+You can also pass qualified addresses around, like in
+\code
+char get_first (const __flash char *array)
+{
+    return array[0];
+}
+
+char get_mydata_nth_first (uint8_t n)
+{
+    return get_first (mydata[n]);
+}
+\endcode
+
+
+\section pgmspace_progmem_vs_flash PROGMEM and __flash: The Differences
+
+So what's are the ups and down of using \c PROGMEM or \c __flash ?
+
+-# \c Named address-spaces are only available in GNU-C99 and up, and with
+  \c avr-gcc v4.7 or newer.  To date, GCC does not support named address-spaces
+  in C++, whereas the \c pgm_read functions work in C++ just as well as in C.
+
+-# Qualifiers like \c __flash are easier to port.  For example, \c avr-gcc
+  does not support named address-spaces for the Reduced Tiny devices like
+  ATtiny10.  This can be handled with the builtin macro \c __FLASH:
+  \code
+#ifndef __FLASH
+#define __flash // empty
+#endif
+
+// Code that uses __flash
+  \endcode
+  (Notice that on Reduced Tiny, section \c \.rodata is located in program
+  memory as opposed to many other AVR cores that have \c \.rodata in RAM.
+  Hence not using \c __flash does not cause a loss of performance.)
+
+-# \c __flash is transparent to the compiler, for example an access like
+  <tt>value = mydata[1][1]</tt> can be optimized to <tt>value = 4</tt>,
+  whereas accesses through \c pgm_read cannot be optimized.
+
+-# Qualifiers like \c __flash can be used in pointer targets, like in
+  \code
+char read_c (const __flash char *c)
+{
+    return *c; // Compiles to LPM
+}
+  \endcode
+  whereas this is not possible for \c PROGMEM, which is an attribute in GCC
+  and not a qualifier.
+
+-# There is no analogon to \c PSTR() for address-spaces.  As of v14,
+  \c avr-gcc still rejects to put local static compound literals into an
+  address-space (GCC PR84163).  While constructs like
+  \code
+const __flash char *ptext = (const __flash char*) PSTR ("Text");
+  \endcode
+  will work, they are not qualifier-correct, i.e. \c avr-gcc will diagnose
+  such uses with \c -Waddr-space-convert.
+
+-# \c PSTR() cannot be used on global scope, whereas a similar construct with
+  address-spaces is possible:  Take for example the code discussed in the
+  next section that declares an array to string literals. With address-space
+  we can write:
+  \code
+#define F(X) ((const __flash char[]) { X })
+
+const __flash char *const __flash string_table[] =
+{
+    F("String 1"),
+    F("String 2"),
+    F("String 3")
+};
+  \endcode
+  Notice that the \c __flash left of the \c * refers to elements pointed to
+  by \c string_table, whereas the \c __flash right of the \c * refers to
+  \c string_table itself, i.e. the string literals as well as the table
+  holding the pointers are in \c __flash.
+
+-# Functions that take a pointer to program space like \c strcpy_P() can be
+  used with pointers that are \c __flash qualified, but again such code
+  is not qualifier-correct.
+
+
+\section pgmspace_strings Storing and Retrieving Strings in the Program Space
+
+\note For a solution with the \c __flash address-space, see the section above
+or have a look at
+\ref faq_rom_array_as "FAQ: How to put an array of strings completely in ROM?"
+
+Now that you can successfully store and retrieve simple data from Program Space
+you want to store and retrive strings from Program Space. And specifically
+you want to store and array of strings to Program Space. So you start off
+with your array, like so:
+
+\code
+const char* const string_table[] =
+{
+    "String 1",
+    "String 2",
+    "String 3"
+};
+\endcode
+
+and then you add your PROGMEM macro to the end of the declaration:
+
+\code
+const char* const string_table[] PROGMEM =
+{
+    "String 1",
+    "String 2",
+    "String 3"
+};
+\endcode
+
+Right? WRONG!
+
+Unfortunately, with GCC attributes, they affect only the declaration that they
+are attached to. So in this case, we successfully put the \c string_table
+variable, the array itself, in the Program Space. This DOES NOT put the actual
+strings themselves into Program Space. At this point, the strings are still
+in the Data Space, which is probably not what you want.
+
+In order to put the strings in Program Space, you have to have explicit
+declarations for each string, and put each string in Program Space:
+
+\code
+static const char string_1[] PROGMEM = "String 1";
+static const char string_2[] PROGMEM = "String 2";
+static const char string_3[] PROGMEM = "String 3";
+\endcode
+
+Then use the new symbols in your table, like so:
+
+\code
+const char* const string_table[] PROGMEM =
+{
+    string_1,
+    string_2,
+    string_3
+};
+\endcode
+
+Now this has the effect of putting \c string_table in Program Space, where
+\c string_table is an array of pointers to characters (strings), where each
+pointer is a pointer to the Program Space, where each string is also stored.
+
+Retrieving the strings are a different matter. You probably don't want to pull
+the string out of Program Space, byte by byte, using the \c pgm_read_byte()
+macro or \c prgm_read_char() function.
+There are other functions declared in the <avr/pgmspace.h> header file
+that work with strings that are stored in the Program Space.
+
+For example if you want to copy the string from Program Space to a buffer in
+RAM (like an automatic variable inside a function, that is allocated on the
+stack), you can do this:
+
+\code
+void foo(void)
+{
+    char buffer[10];
+
+    for (uint8_t i = 0; i < 3; i++)
+    {
+        strcpy_P (buffer, (const char*) pgm_read_ptr (& string_table[i]));
+
+        // Display buffer on LCD.
+    }
+}
+\endcode
+
+Here, the \c string_table array is stored in Program Space, so
+we access it normally, as if were stored in Data Space, then take the address
+of the location we want to access, and use the address as a parameter to
+\c pgm_read_ptr. We use the \c pgm_read_ptr macro to read the string pointer
+out of the \c string_table array. Remember that a pointer is 16-bits, or word
+size. The \c pgm_read_ptr macro will return a \c void*. This pointer
+is an address in Program Space pointing to the string that we want to
+copy. This pointer is then used as a parameter to the function \c strcpy_P. The
+function \c strcpy_P is just like the regular \c strcpy function, except that
+it copies a string from Program Space (the second parameter) to a buffer in the
+Data Space (the first parameter).
+
+There are many string functions available that work with strings located in
+Program Space. All of these special string functions have a suffix of \c _P in
+the function name, and are declared in the <avr/pgmspace.h> header file.
+
+*/
