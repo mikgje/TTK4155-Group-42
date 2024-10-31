@@ -15,5 +15,5 @@ struct can_message {
     volatile uint8_t data0, data1, data2, data3, data4, data5, data6, data7;
 };
 
-void can_send_message(struct can_message* tx_buffer);
+void can_transmit_message(struct can_message* tx_buffer);
 void can_receive_message(struct can_message* rx_buffer);

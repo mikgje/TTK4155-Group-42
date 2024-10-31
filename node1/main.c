@@ -30,14 +30,14 @@
 
 #define BYTE_TO_BINARY_PATTERN "%c%c%c%c%c%c%c%c"
 #define BYTE_TO_BINARY(byte)  \
-  ((byte) & 0x80 ? '1' : '0'), \
-  ((byte) & 0x40 ? '1' : '0'), \
-  ((byte) & 0x20 ? '1' : '0'), \
-  ((byte) & 0x10 ? '1' : '0'), \
-  ((byte) & 0x08 ? '1' : '0'), \
-  ((byte) & 0x04 ? '1' : '0'), \
-  ((byte) & 0x02 ? '1' : '0'), \
-  ((byte) & 0x01 ? '1' : '0') 
+((byte) & 0x80 ? '1' : '0'), \
+((byte) & 0x40 ? '1' : '0'), \
+((byte) & 0x20 ? '1' : '0'), \
+((byte) & 0x10 ? '1' : '0'), \
+((byte) & 0x08 ? '1' : '0'), \
+((byte) & 0x04 ? '1' : '0'), \
+((byte) & 0x02 ? '1' : '0'), \
+((byte) & 0x01 ? '1' : '0') 
 
 /* printf("Leading text "BYTE_TO_BINARY_PATTERN, BYTE_TO_BINARY(byte)); */
 
@@ -68,7 +68,7 @@ int main(void)
     
 
 
-    //uint8_t* adc_values = malloc(6*sizeof(uint8_t));	
+    uint8_t* adc_values = malloc(6*sizeof(uint8_t));	
     //uint8_t* xy_saturation = malloc(4*sizeof(uint8_t)); // in order: x_min, x_max, y_min, y_max
 
     //joystick_configuration(xy_saturation, adc_values);
@@ -123,7 +123,7 @@ int main(void)
     volatile struct can_message *can_rx_buffer = malloc(12*sizeof(uint8_t));
     //can_rx_buffer->buffer_start_address = 0b01100000;
     can_rx_buffer->buffer_start_address = 96;
-      can_tx_buffer->message_id_high = 0;
+    can_tx_buffer->message_id_high = 0;
     can_rx_buffer->message_id_low = 0;
     can_rx_buffer->data0 = 0;
     can_rx_buffer->data1 = 0;
@@ -135,69 +135,21 @@ int main(void)
     can_rx_buffer->data7 = 0;
 
     while(1) {
+        adc_transmit(adc_values, can_tx_buffer);
+        printf("Joystick X: %d, Joystick Y: %d\r\n Slider Left: %d, Slider Right: %d\r\n Button Left: %d, Button Right: %d\r\n",
+        can_tx_buffer->data1, can_tx_buffer->data0, can_tx_buffer->data2, can_tx_buffer->data3, can_tx_buffer->data4, can_tx_buffer->data5);
+        //can_transmit_message(can_tx_buffer);
         /*
-        can_tx_buffer->data0 = 0;
-        can_tx_buffer->data1 = 0;
-        can_tx_buffer->data2 = 0;
-        can_tx_buffer->data3 = 0;
-        can_tx_buffer->data4 = 0;
-        can_tx_buffer->data5 = 0;
-        can_tx_buffer->data6 = 0;
-        can_tx_buffer->data7 = 0;
-        //can_rx_buffer->buffer_start_address = 0b01100000;
-        _delay_ms(500);
-        printf("TX Buffer:%d %d %d %d |%d|%d|%d|%d|%d|%d|%d|%d|\r\n", can_tx_buffer->buffer_start_address, can_tx_buffer->message_id_high, can_tx_buffer->message_id_low, can_tx_buffer->data_length, can_tx_buffer->data0, can_tx_buffer->data1, can_tx_buffer->data2, can_tx_buffer->data3, can_tx_buffer->data4, can_tx_buffer->data5, can_tx_buffer->data6, can_tx_buffer->data7);
-        _delay_ms(500);
-        //can_rx_buffer->buffer_start_address = 96;
-        //printf("RX Buffer:%d %d%d%d%d%d%d%d%d\r\n", can_rx_buffer->buffer_start_address, can_rx_buffer->data0, can_rx_buffer->data1, can_rx_buffer->data2, can_rx_buffer->data3, can_rx_buffer->data4, can_rx_buffer->data5, can_rx_buffer->data6, can_rx_buffer->data7);
-        can_transmit_message(can_tx_buffer);
-        _delay_ms(500); 
-        can_receive_message(can_rx_buffer);
-        //printf("TX Buffer:%d %d%d%d%d%d%d%d%d\r\n", can_tx_buffer->buffer_start_address, can_tx_buffer->data0, can_tx_buffer->data1, can_tx_buffer->data2, can_tx_buffer->data3, can_tx_buffer->data4, can_tx_buffer->data5, can_tx_buffer->data6, can_tx_buffer->data7);
-        _delay_ms(500);
-        printf("RX Buffer:%d %d %d %d |%d|%d|%d|%d|%d|%d|%d|%d|\r\n", can_rx_buffer->buffer_start_address, can_rx_buffer->message_id_high, can_rx_buffer->message_id_low, can_rx_buffer->data_length, can_rx_buffer->data0, can_rx_buffer->data1, can_rx_buffer->data2, can_rx_buffer->data3, can_rx_buffer->data4, can_rx_buffer->data5, can_rx_buffer->data6, can_rx_buffer->data7);
-        _delay_ms(500);
-        _delay_ms(1000);
-        printf("\r\n");
-
-        //can_tx_buffer->buffer_start_address = 48;
-        can_tx_buffer->data0 = 9;
-        can_tx_buffer->data1 = 9;
-        can_tx_buffer->data2 = 9;
-        can_tx_buffer->data3 = 9;
-        can_tx_buffer->data4 = 9;
-        can_tx_buffer->data5 = 9;
-        can_tx_buffer->data6 = 9;
-        can_tx_buffer->data7 = 9;
-        //can_rx_buffer->buffer_start_address = 0b01100000;
-        //can_rx_buffer->buffer_start_address = 0b01100000;
-        _delay_ms(500);
-        printf("TX Buffer:%d %d %d %d |%d|%d|%d|%d|%d|%d|%d|%d|\r\n", can_tx_buffer->buffer_start_address, can_tx_buffer->message_id_high, can_tx_buffer->message_id_low, can_tx_buffer->data_length, can_tx_buffer->data0, can_tx_buffer->data1, can_tx_buffer->data2, can_tx_buffer->data3, can_tx_buffer->data4, can_tx_buffer->data5, can_tx_buffer->data6, can_tx_buffer->data7);
-        _delay_ms(500);
-        //can_rx_buffer->buffer_start_address = 96;
-        //printf("RX Buffer:%d %d%d%d%d%d%d%d%d\r\n", can_rx_buffer->buffer_start_address, can_rx_buffer->data0, can_rx_buffer->data1, can_rx_buffer->data2, can_rx_buffer->data3, can_rx_buffer->data4, can_rx_buffer->data5, can_rx_buffer->data6, can_rx_buffer->data7);
-        can_transmit_message(can_tx_buffer);
-        _delay_ms(500); 
-        can_receive_message(can_rx_buffer);
-        //printf("TX Buffer:%d %d%d%d%d%d%d%d%d\r\n", can_tx_buffer->buffer_start_address, can_tx_buffer->data0, can_tx_buffer->data1, can_tx_buffer->data2, can_tx_buffer->data3, can_tx_buffer->data4, can_tx_buffer->data5, can_tx_buffer->data6, can_tx_buffer->data7);
-        _delay_ms(500);
-        printf("RX Buffer:%d %d %d %d |%d|%d|%d|%d|%d|%d|%d|%d|\r\n", can_rx_buffer->buffer_start_address, can_rx_buffer->message_id_high, can_rx_buffer->message_id_low, can_rx_buffer->data_length, can_rx_buffer->data0, can_rx_buffer->data1, can_rx_buffer->data2, can_rx_buffer->data3, can_rx_buffer->data4, can_rx_buffer->data5, can_rx_buffer->data6, can_rx_buffer->data7);
-        _delay_ms(500);
-        _delay_ms(1000);
+          can_receive_message(can_rx_buffer);
+          printf("RX Buffer:%d %d %d %d |%d|%d|%d|%d|%d|%d|%d|%d|\r\n", can_rx_buffer->buffer_start_address, can_rx_buffer->message_id_high, can_rx_buffer->message_id_low, can_rx_buffer->data_length, can_rx_buffer->data0, can_rx_buffer->data1, can_rx_buffer->data2, can_rx_buffer->data3, can_rx_buffer->data4, can_rx_buffer->data5, can_rx_buffer->data6, can_rx_buffer->data7);
+          printf("End of loop\r\n");
+          printf("\r\n");
         */
-        /*
-        can_transmit_message(can_tx_buffer);
-        printf("TX Buffer:%d %d%d%d%d%d%d%d%d\r\n", can_tx_buffer->buffer_start_address, can_tx_buffer->data0, can_tx_buffer->data1, can_tx_buffer->data2, can_tx_buffer->data3, can_tx_buffer->data4, can_tx_buffer->data5, can_tx_buffer->data6, can_tx_buffer->data7);
-        */
-        can_receive_message(can_rx_buffer);
-        printf("RX Buffer:%d %d %d %d |%d|%d|%d|%d|%d|%d|%d|%d|\r\n", can_rx_buffer->buffer_start_address, can_rx_buffer->message_id_high, can_rx_buffer->message_id_low, can_rx_buffer->data_length, can_rx_buffer->data0, can_rx_buffer->data1, can_rx_buffer->data2, can_rx_buffer->data3, can_rx_buffer->data4, can_rx_buffer->data5, can_rx_buffer->data6, can_rx_buffer->data7);
-        printf("End of loop\r\n");
-        printf("\r\n");
-
-        _delay_ms(2000);
+  
+        _delay_ms(500);
     }
 
-    //free(adc_values);
+    free(adc_values);
     //free(xy_saturation);
     //free(menu_entries);
     //free(menu);

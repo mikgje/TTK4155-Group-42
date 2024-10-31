@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include "adc.h"
 #include "xmem.h"
+#include "can_controller.h"
 
 /* Clock speeds */
 #define FOSC 4915200UL
@@ -86,4 +87,15 @@ void joystick_configuration(uint8_t* xy_saturation, uint8_t* adc_values) {
     xy_saturation[3] = adc_values[1];
     _delay_ms(500);
     printf("Configuration complete.\r\n");
+}
+
+void adc_transmit(uint8_t* adc_values, struct can_message* tx_buffer) {
+    adc_read(adc_values);
+    tx_buffer->data0 = adc_values[0];
+    tx_buffer->data1 = adc_values[1];
+    tx_buffer->data2 = adc_values[2];
+    tx_buffer->data3 = adc_values[3];
+    tx_buffer->data4 = adc_values[4];
+    tx_buffer->data5 = adc_values[5];
+    can_transmit_message(tx_buffer);
 }

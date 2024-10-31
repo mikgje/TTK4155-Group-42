@@ -10,7 +10,9 @@ SOURCE_FILES = \
 	main.c \
 	uart.c \
 	can.c \
-	time.c
+	time.c \
+	servo.c \
+	pwm.c
 
 
 

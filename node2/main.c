@@ -4,6 +4,8 @@
 #include "time.h"
 #include "uart.h"
 #include "sam.h"
+#include "servo.h"
+#include "pwm.h"
 
 #define BAUDRATE 9600
 #define F_CPU 84000000
@@ -29,11 +31,13 @@ int main()
 
     //Uncomment after including uart above
     uart_init(F_CPU, BAUDRATE);
-    printf("Hello World\r\n");
+    printf("\rHello World\r\n");
 
     can_init((CanInit){.brp = 41, .phase1 = 5, .phase2 = 6, .propag = 1}, 0);
 
-   CanMsg m = (CanMsg) {
+    pwm_init();
+
+    CanMsg m = (CanMsg) {
        .id = 1,
        .length = 8,
        .byte8.bytes[0] = 1,
@@ -46,14 +50,19 @@ int main()
        .byte8.bytes[7] = 53,
    };
 
-    while (1)
-    {
-        can_tx(m);
+    CanMsg* rx_message = malloc(sizeof(CanMsg));
 
+    while (1)
+    {   
+        /*
+        adc_receive(rx_message);
+        pwm_set_duty_cycle(900);
         time_spinFor(msecs(5000));
-        printf("Hei: %d\r\n", m.byte8);
+        pwm_set_duty_cycle(2100);
         time_spinFor(msecs(5000));
-        //uart_tx(5);
+        */
+        servo_control(rx_message);
+        time_spinFor(msecs(100));
     }
     
 }
