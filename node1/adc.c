@@ -9,12 +9,6 @@
 #define FOSC 4915200UL
 #define F_CPU 4915200
 
-#define set_bit(reg, bit) (reg |= (1 << bit))   /* set bit */
-#define clear_bit(reg, bit) (reg &= ~(1 << bit))    /* clear bit */
-#define test_bit(reg, bit) (reg & (1 << bit))   /* read bit */
-#define loop_until_bit_is_set(reg, bit) while (!test_bit(reg, bit))
-#define loop_until_bit_is_clear(reg, bit) while (test_bit(reg, bit))
-
 uint8_t pwm_init(void) {
     /* Configure PD5 as output and PB0, PB1 and PD4 as input */
     /* PD5 is used as a PWM CLK signal */

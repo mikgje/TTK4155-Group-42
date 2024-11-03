@@ -1,6 +1,6 @@
-#include "xmem.h"
 #include <stdint.h>
 #include <avr/io.h>
+#include "xmem.h"
 
 #define BASE_ADDRESS 0x1000
 

@@ -3,12 +3,6 @@
 #include "can_controller.h"
 #include "spi.h"
 
-#define set_bit(reg, bit) (reg |= (1 << bit))   /* set bit */
-#define clear_bit(reg, bit) (reg &= ~(1 << bit))    /* clear bit */
-#define test_bit(reg, bit) (reg & (1 << bit))   /* read bit */
-#define loop_until_bit_is_set(reg, bit) while (!test_bit(reg, bit))
-#define loop_until_bit_is_clear(reg, bit) while (test_bit(reg, bit))
-
 #define DDRSPI DDRB
 #define DDSCK DDB7
 #define DDMISO DDB6
@@ -63,7 +57,7 @@
 #define RTS_BASE    0b10000000
 #define READ_STATUS 0b10100000
 #define BIT_MODIFY  0b00000101
-
+ 
 /* CAN controller registers */
 #define CNF1        0b00101010
 #define CNF2        0b00101001

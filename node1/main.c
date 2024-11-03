@@ -5,6 +5,7 @@
 #include <util/delay.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 /* 
  * Fuse configuration
@@ -21,12 +22,6 @@
 
 #define BAUD 9600UL
 #define MYUBRR (FOSC/16/BAUD - 1)
-
-#define set_bit(reg, bit) (reg |= (1 << bit))   /* set bit */
-#define clear_bit(reg, bit) (reg &= ~(1 << bit))    /* clear bit */
-#define test_bit(reg, bit) (reg & (1 << bit))   /* read bit */
-#define loop_until_bit_is_set(reg, bit) while (!test_bit(reg, bit))
-#define loop_until_bit_is_clear(reg, bit) while (test_bit(reg, bit))
 
 #define BYTE_TO_BINARY_PATTERN "%c%c%c%c%c%c%c%c"
 #define BYTE_TO_BINARY(byte)  \
@@ -105,7 +100,7 @@ int main(void)
     can_set_normal();
 
     //volatile struct can_message *can_tx_buffer = malloc(sizeof(struct can_message));
-    volatile struct can_message *can_tx_buffer = malloc(12*sizeof(uint8_t));
+    struct can_message *can_tx_buffer = malloc(12*sizeof(uint8_t));
     //can_tx_buffer->buffer_start_address = 0b00110000;
     can_tx_buffer->buffer_start_address = 48;
     can_tx_buffer->message_id_high = 0;
@@ -120,7 +115,7 @@ int main(void)
     can_tx_buffer->data7 = 123;
 
     //volatile struct can_message *can_rx_buffer = malloc(sizeof(struct can_message));
-    volatile struct can_message *can_rx_buffer = malloc(12*sizeof(uint8_t));
+    struct can_message *can_rx_buffer = malloc(12*sizeof(uint8_t));
     //can_rx_buffer->buffer_start_address = 0b01100000;
     can_rx_buffer->buffer_start_address = 96;
     can_tx_buffer->message_id_high = 0;

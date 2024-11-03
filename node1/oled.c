@@ -1,6 +1,5 @@
 #include <util/delay.h>
 #include <stdint.h>
-//#include <string.h>
 #include "oled.h"
 #include "fonts.h"
 
