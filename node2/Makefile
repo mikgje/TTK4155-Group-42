@@ -12,7 +12,8 @@ SOURCE_FILES = \
 	can.c \
 	time.c \
 	servo.c \
-	pwm.c
+	pwm.c \
+	quadrature_decoder.c
 
 
 
