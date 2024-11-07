@@ -1,5 +1,5 @@
 # List all source files to be compiled; separate with space
-SOURCE_FILES := uart.c main.c xmem.c sram_test.c adc.c oled.c spi.c can_controller.c can_transceiver.c
+SOURCE_FILES := uart.c main.c xmem.c sram_test.c adc.c oled.c spi.c can_controller.c
 
 # Set this flag to "yes" (no quotes) to use JTAG; otherwise ISP (SPI) is used
 PROGRAM_WITH_JTAG := yes

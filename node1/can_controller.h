@@ -9,6 +9,7 @@ void can_configure_transmit(void);
 void can_configure_receive(void);
 void can_configure_filters_and_masks(void);
 void can_set_loopback(void);
+void can_set_normal(void);
 
 struct can_message {
     volatile uint8_t buffer_start_address, message_id_high, message_id_low, data_length;

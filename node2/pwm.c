@@ -3,7 +3,7 @@
 
 #define PIO_ABSR_PIOC 0x400E1270
 
-/* We can use PWM0, with PWML0 at PC2 and PWMH0 at PC3 */
+/* We can use PWH1 at PB13 /
 
 /* PWM in ASCII */
 #define WPKEY 0x50574D
@@ -31,7 +31,7 @@
 void pwm_init() {
     /* Power on PWM */
     PMC->PMC_PCER1 |= PMC_PCER1_PID36;
-    /* Set PC2 and PC3 as peripheral B*/
+    /* Set PB13 as peripheral B */
     PIOB->PIO_ABSR |= PIO_ABSR_P13;
     /* Disable PIO, enable peripheral, to control the corresponding pin */
     PIOB->PIO_PDR = PIO_PDR_P13;

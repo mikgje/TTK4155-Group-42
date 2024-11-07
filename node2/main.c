@@ -6,6 +6,8 @@
 #include "sam.h"
 #include "servo.h"
 #include "pwm.h"
+#include "adc.h"
+#include "game.h"
 
 #define BAUDRATE 9600
 #define F_CPU 84000000
@@ -36,6 +38,7 @@ int main()
     can_init((CanInit){.brp = 41, .phase1 = 5, .phase2 = 6, .propag = 1}, 0);
 
     pwm_init();
+    adc_init();
 
     CanMsg m = (CanMsg) {
        .id = 1,
@@ -51,6 +54,8 @@ int main()
    };
 
     CanMsg* rx_message = malloc(sizeof(CanMsg));
+    struct game* game_ptr = malloc(sizeof(struct game));
+        game_ptr->points = 0;
 
     while (1)
     {   
@@ -62,9 +67,10 @@ int main()
         time_spinFor(msecs(5000));
         */
         servo_control(rx_message);
-        time_spinFor(msecs(100));
+        game_counter(game_ptr);
+        time_spinFor(msecs(1));
+        //printf("Points: %d", game_ptr->points);
     }
-    
 }
 
 /*

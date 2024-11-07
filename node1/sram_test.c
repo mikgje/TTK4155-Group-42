@@ -1,6 +1,7 @@
-#include "sram_test.h"
+#include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include "sram_test.h"
 
 void sram_test(void) {
     volatile char* ext_ram;

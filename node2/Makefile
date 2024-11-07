@@ -13,7 +13,9 @@ SOURCE_FILES = \
 	time.c \
 	servo.c \
 	pwm.c \
-	quadrature_decoder.c
+	adc.c \
+	quadrature_decoder.c \
+	game.c
 
 
 
