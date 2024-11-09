@@ -65,25 +65,25 @@ void adc_read(uint8_t* adc_values) {
 
 void joystick_configuration(uint8_t* xy_saturation, uint8_t* adc_values) {
     printf("\r\nStarting configuration. Press any key to continue.\r\n");
-    uart_receive();
+    uart_receive(NULL);
     _delay_ms(500);
     printf("Hold joystick to the far left and then press any key.\r\n");
-    uart_receive();
+    uart_receive(NULL);
     adc_read(adc_values);
     xy_saturation[0] = adc_values[0];
     _delay_ms(500);
     printf("Hold joystick to the far right and then press any key.\r\n");
-    uart_receive();
+    uart_receive(NULL);
     adc_read(adc_values);
     xy_saturation[1] = adc_values[0];
     _delay_ms(500);
     printf("Hold joystick to the far top and then press any key.\r\n");
-    uart_receive();
+    uart_receive(NULL);
     adc_read(adc_values);
     xy_saturation[2] = adc_values[1];
     _delay_ms(500);
     printf("Hold joystick to the far bottom and then press any key.\r\n");
-    uart_receive();
+    uart_receive(NULL);
     adc_read(adc_values);
     xy_saturation[3] = adc_values[1];
     _delay_ms(500);

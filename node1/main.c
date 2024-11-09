@@ -1,5 +1,6 @@
-#define FOSC 4915200UL // Clock Speed
-#define F_CPU 4915200 // Clock Speed
+/* Clock speed */
+#define FOSC 4915200UL
+#define F_CPU 4915200 
 
 #include <avr/io.h>
 #include <util/delay.h>
@@ -46,16 +47,16 @@ int main(void)
     // DDRA |= 0b11111111; // set all PORT A pins as outputs 
     // DDRE |= (1 << DDE1); //set as output
 
-    uart_init(MYUBRR);
-    fdevopen(uart_transmit, uart_receive);
-
+    printf("uart_init(): %d\r\n", uart_init(MYUBRR));
     printf("xmem_init(): %d\r\n", xmem_init());
     printf("pwm_init():  %d\r\n", pwm_init());
     printf("oled_init(): %d\r\n", oled_init());
     printf("spi_init():  %d\r\n", spi_init());
     printf("can_init():  %d\r\n", can_init());
 
-    #define CNF1        0b00101010
+    fdevopen((int(*) (char, FILE*))&uart_transmit, (int(*) (FILE*))&uart_receive);
+
+   #define CNF1        0b00101010
     #define CNF2        0b00101001
     #define CNF3        0b00101000
 

@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdint.h>
 
 #ifndef GAME_H
 #define GAME_H
