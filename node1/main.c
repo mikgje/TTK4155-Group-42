@@ -3,8 +3,8 @@
 
 #include <avr/io.h>
 #include <util/delay.h>
-#include <stdint.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 
 /* 
@@ -12,16 +12,20 @@
  * avrdude -p m162 -c atmelice -U lfuse:w:0xC1:m -U hfuse:w:0x19:m
  */
 
+#include "util.h"
 #include "xmem.h"
 #include "uart.h"
 #include "adc.h"
 #include "oled.h"
 #include "spi.h"
 #include "can_controller.h"
-#include "can_transceiver.h"
 
 #define BAUD 9600UL
 #define MYUBRR (FOSC/16/BAUD - 1)
+
+#define set_bit(reg, bit) (reg |= (1 << bit))   /* set bit */
+#define clear_bit(reg, bit) (reg &= ~(1 << bit))    /* clear bit */
+#define test_bit(reg, bit) (reg & (1 << bit))   /* read bit */
 
 #define BYTE_TO_BINARY_PATTERN "%c%c%c%c%c%c%c%c"
 #define BYTE_TO_BINARY(byte)  \
@@ -141,7 +145,7 @@ int main(void)
           printf("\r\n");
         */
   
-        _delay_ms(500);
+        _delay_ms(20);
     }
 
     free(adc_values);

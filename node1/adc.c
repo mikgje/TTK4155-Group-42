@@ -1,13 +1,20 @@
-#include <avr/io.h>
-#include <util/delay.h>
-#include <stdint.h>
-#include "adc.h"
-#include "xmem.h"
-#include "can_controller.h"
-
 /* Clock speeds */
 #define FOSC 4915200UL
 #define F_CPU 4915200
+
+#include <avr/io.h>
+#include <util/delay.h>
+#include <stdio.h>
+#include <stdint.h>
+#include "adc.h"
+#include "util.h"
+#include "uart.h"
+#include "xmem.h"
+#include "can_controller.h"
+
+#define set_bit(reg, bit) (reg |= (1 << bit))   /* set bit */
+#define clear_bit(reg, bit) (reg &= ~(1 << bit))    /* clear bit */
+#define test_bit(reg, bit) (reg & (1 << bit))   /* read bit */
 
 uint8_t pwm_init(void) {
     /* Configure PD5 as output and PB0, PB1 and PD4 as input */

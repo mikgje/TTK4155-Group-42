@@ -12,6 +12,6 @@ void servo_control(CanMsg* rx_message) {
     adc_receive(rx_message);
     joystick_x = rx_message->byte8.bytes[1];
     duty_cycle = 900 + joystick_x * ((2100 - 900)/255);
-    printf("Duty cycle: %d", duty_cycle);
+    //printf("Duty cycle: %d\n\r", duty_cycle);
     pwm_set_duty_cycle(duty_cycle);
 }

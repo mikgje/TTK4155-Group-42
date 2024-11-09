@@ -27,6 +27,6 @@ typedef struct {
     PWM_CH PWM_CH7;
 } PWM_REGS;
 
-void spi_init();
+void pwm_init();
 void pwm_set_duty_cycle(uint32_t dc);
 void interupt_timer(uint8_t time);

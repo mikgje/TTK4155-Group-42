@@ -1,5 +1,8 @@
+#define F_CPU 4915200
+
 #include <util/delay.h>
 #include <stdint.h>
+#include <string.h>
 #include "oled.h"
 #include "fonts.h"
 
