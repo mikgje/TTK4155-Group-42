@@ -34,7 +34,7 @@ void pwm_init() {
     /* Set PB13 as peripheral B */
     PIOB->PIO_ABSR |= PIO_ABSR_P13;
     /* Disable PIO, enable peripheral, to control the corresponding pin */
-    PIOB->PIO_PDR = PIO_PDR_P13;
+    PIOB->PIO_PDR |= PIO_PDR_P13;
 
     /* Disable write protect for PWM registers */
     PWM->PWM_WPCR |= (WPKEY << 8) | (WPRG << 2) | (WPCMD);
@@ -45,8 +45,24 @@ void pwm_init() {
     /* Period = CPRD / (84MHz / DIVA) */
     PWM->PWM_CH1.PWM_CPRD = 20000; 
     PWM->PWM_CH1.PWM_CDTY = 10000;
-    /* Enable PWM output for channel 0 */
+    /* Enable PWM output for channel 1 */
     PWM->PWM_ENA = 0b00000010;
+
+    /* Set PB12 as peripheral B */
+    PIOB->PIO_ABSR |= PIO_ABSR_P12;
+    /* Disable PIO, enable peripheral, to control the corresponding pin */
+    PIOB->PIO_PDR |= PIO_PDR_P12;
+
+    /* Disable write protect for PWM registers */
+    PWM->PWM_WPCR |= (WPKEY << 8) | (WPRG << 2) | (WPCMD);
+
+    /* Set CLK as MCK / DIVA */
+    PWM->PWM_CH0.PWM_CMR |= (CPOL << 9) | CPRE;
+    /* Period = CPRD / (84MHz / DIVA) */
+    PWM->PWM_CH0.PWM_CPRD = 20000; 
+    PWM->PWM_CH0.PWM_CDTY = 10000;
+    /* Enable PWM output for channel 0 */
+    PWM->PWM_ENA |= 0b00000001;
 }
 
 void pwm_set_duty_cycle(uint32_t dc) {

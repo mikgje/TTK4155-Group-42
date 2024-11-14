@@ -68,10 +68,11 @@ int main(void)
     
 
 
-    uint8_t* adc_values = malloc(6*sizeof(uint8_t));	
-    //uint8_t* xy_saturation = malloc(4*sizeof(uint8_t)); // in order: x_min, x_max, y_min, y_max
+    uint8_t* adc_values = malloc(6*sizeof(uint8_t));
+    uint8_t* xy_saturation = malloc(4*sizeof(uint8_t)); // in order: x_min, x_max, y_min, y_max
 
     //joystick_configuration(xy_saturation, adc_values);
+    printf("CONFIG\r\n 0: %d, 1: %d, 2: %d, 3: %d\r\n", xy_saturation[0], xy_saturation[1], xy_saturation[2], xy_saturation[3]);
 
     oled_clear_screen();
 
@@ -104,9 +105,7 @@ int main(void)
     //can_set_loopback();
     can_set_normal();
 
-    //volatile struct can_message *can_tx_buffer = malloc(sizeof(struct can_message));
     struct can_message *can_tx_buffer = malloc(12*sizeof(uint8_t));
-    //can_tx_buffer->buffer_start_address = 0b00110000;
     can_tx_buffer->buffer_start_address = 48;
     can_tx_buffer->message_id_high = 0;
     can_tx_buffer->message_id_low = 0;
@@ -119,9 +118,7 @@ int main(void)
     can_tx_buffer->data6 = 123;
     can_tx_buffer->data7 = 123;
 
-    //volatile struct can_message *can_rx_buffer = malloc(sizeof(struct can_message));
     struct can_message *can_rx_buffer = malloc(12*sizeof(uint8_t));
-    //can_rx_buffer->buffer_start_address = 0b01100000;
     can_rx_buffer->buffer_start_address = 96;
     can_tx_buffer->message_id_high = 0;
     can_rx_buffer->message_id_low = 0;
@@ -135,22 +132,15 @@ int main(void)
     can_rx_buffer->data7 = 0;
 
     while(1) {
-        adc_transmit(adc_values, can_tx_buffer);
-        printf("Joystick X: %d, Joystick Y: %d\r\n Slider Left: %d, Slider Right: %d\r\n Button Left: %d, Button Right: %d\r\n",
-        can_tx_buffer->data1, can_tx_buffer->data0, can_tx_buffer->data2, can_tx_buffer->data3, can_tx_buffer->data4, can_tx_buffer->data5);
-        //can_transmit_message(can_tx_buffer);
-        /*
-          can_receive_message(can_rx_buffer);
-          printf("RX Buffer:%d %d %d %d |%d|%d|%d|%d|%d|%d|%d|%d|\r\n", can_rx_buffer->buffer_start_address, can_rx_buffer->message_id_high, can_rx_buffer->message_id_low, can_rx_buffer->data_length, can_rx_buffer->data0, can_rx_buffer->data1, can_rx_buffer->data2, can_rx_buffer->data3, can_rx_buffer->data4, can_rx_buffer->data5, can_rx_buffer->data6, can_rx_buffer->data7);
-          printf("End of loop\r\n");
-          printf("\r\n");
-        */
-  
+        adc_transmit(adc_values, xy_saturation, can_tx_buffer);
+        printf("Joystick X: %d, Joystick Y: %d, Slider Left: %d, Slider Right: %d, Button Left: %d, Button Right: %d, y_min: %d, y_max: %d\r\n",
+        can_tx_buffer->data1, can_tx_buffer->data0, can_tx_buffer->data2, can_tx_buffer->data3, can_tx_buffer->data4, can_tx_buffer->data5, can_tx_buffer->data6, can_tx_buffer->data7);
+
         _delay_ms(20);
     }
 
     free(adc_values);
-    //free(xy_saturation);
+    free(xy_saturation);
     //free(menu_entries);
     //free(menu);
     free(can_tx_buffer);

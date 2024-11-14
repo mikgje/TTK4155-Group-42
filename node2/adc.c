@@ -1,7 +1,7 @@
 #include "adc.h"
 #include "sam.h"
 
-/* We will use channel 0 - AD0 on I/O line PA2, peripheral X1 as described in table 43-3 */
+/* We will use channel 0 - AD7 on I/O line PA2, peripheral X1 as described in table 43-3 */
 
 #define ADC ((ADC_REGS*)0x400C0000)
 

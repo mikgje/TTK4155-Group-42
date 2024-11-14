@@ -15,7 +15,8 @@ SOURCE_FILES = \
 	pwm.c \
 	adc.c \
 	decoder.c \
-	game.c
+	game.c \
+	motor.c
 
 
 

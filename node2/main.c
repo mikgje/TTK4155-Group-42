@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <stdint.h>
+#include <float.h>
 #include <stdarg.h>
 #include "can.h"
 #include "time.h"
@@ -8,9 +10,14 @@
 #include "pwm.h"
 #include "adc.h"
 #include "game.h"
+#include "decoder.h"
+#include "motor.h"
 
 #define BAUDRATE 9600
 #define F_CPU 84000000
+
+/* Approximate time width in ms */
+#define delta 20
 
 /*
  * Remember to update the Makefile with the (relative) path to the uart.c file.
@@ -39,6 +46,8 @@ int main()
 
     pwm_init();
     adc_init();
+    decoder_init();
+    motor_init();
 
     CanMsg m = (CanMsg) {
        .id = 1,
@@ -57,18 +66,37 @@ int main()
     struct game* game_ptr = malloc(sizeof(struct game));
         game_ptr->points = 0;
 
+    int32_t proportional_gain;
+    float integral_gain;
+    int32_t last_error;
+    float error_integral;
+    float delta_time;
+    struct controller *controller_ptr = malloc(2*sizeof(int32_t) + 3*sizeof(float));
+    //struct controller* controller_ptr = malloc(sizeof(struct controller));
+        controller_ptr->proportional_gain = 5;
+        controller_ptr->integral_gain = 0.1;
+        controller_ptr->last_error = 0;
+        controller_ptr->error_integral = 0;
+        controller_ptr->delta_time = ((float)(delta))/1000;
+
+    /*
+    printf("ÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆ: %d %.6f %d %.6f %.6f\r\n",
+    controller_ptr->proportional_gain,
+    controller_ptr->integral_gain,
+    controller_ptr->last_error,
+    controller_ptr->error_integral,
+    controller_ptr->delta_time);
+    */
+
     while (1)
     {   
-        /*
         adc_receive(rx_message);
-        pwm_set_duty_cycle(900);
-        time_spinFor(msecs(5000));
-        pwm_set_duty_cycle(2100);
-        time_spinFor(msecs(5000));
-        */
         servo_control(rx_message);
-        game_counter(game_ptr);
-        time_spinFor(msecs(1));
+        //game_counter(game_ptr);
+        //motor_joystick_control(rx_message);
+        //motor_controller(controller_ptr, rx_message);
+        //motor_controller(rx_message);
+        time_spinFor(msecs(delta));
         //printf("Points: %d", game_ptr->points);
     }
 }

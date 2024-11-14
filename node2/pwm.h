@@ -1,5 +1,8 @@
 #include <stdint.h>
 
+#ifndef PWM_H
+#define PWM_H
+
 typedef struct {
     uint32_t PWM_CMR;
     uint32_t PWM_CDTY;
@@ -30,3 +33,5 @@ typedef struct {
 void pwm_init();
 void pwm_set_duty_cycle(uint32_t dc);
 void interupt_timer(uint8_t time);
+
+#endif

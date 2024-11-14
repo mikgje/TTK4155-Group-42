@@ -3,8 +3,8 @@
 #ifndef DECODER_H
 #define DECODER_H
 
-void init_decoder(void);
-void read_motor_position(void);
+void decoder_init(void);
+uint32_t decoder_read(void);
 
 typedef struct {
     uint32_t TC_CCR;
