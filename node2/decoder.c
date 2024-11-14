@@ -38,7 +38,7 @@ void init_decoder(void) {
     }
 
     TC->TC_CH0.TC_CCR = (SWTRG << 2) | (CLKDIS << 1) | (CLKEN);
-    TC->TC_CHO.TC_CMR = (LDRB << 18) | (LDRA << 16) | (WAVE << 15) | (CPCTRG << 14) | (ABETRG << 10) | (ETRGEDG << 8) | (LDBDIS << 0) | (LDBSTOP << 6) | (BURST << 4) | (CLKI << 3) | (TCCLKS);
+    TC->TC_CH0.TC_CMR = (LDRB << 18) | (LDRA << 16) | (WAVE << 15) | (CPCTRG << 14) | (ABETRG << 10) | (ETRGEDG << 8) | (LDBDIS << 0) | (LDBSTOP << 6) | (BURST << 4) | (CLKI << 3) | (TCCLKS);
     TC->TC_BCR = (SYNC);
     TC->TC_BMR = (POSEN << 9) | (QDEN << 8);
 
