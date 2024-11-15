@@ -16,7 +16,8 @@ SOURCE_FILES = \
 	adc.c \
 	decoder.c \
 	game.c \
-	motor.c
+	motor.c \
+	solenoid.c
 
 
 

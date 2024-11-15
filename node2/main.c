@@ -48,6 +48,7 @@ int main()
     adc_init();
     decoder_init();
     motor_init();
+    solenoid_init();
 
     CanMsg m = (CanMsg) {
        .id = 1,
@@ -66,6 +67,9 @@ int main()
     struct game* game_ptr = malloc(sizeof(struct game));
         game_ptr->points = 0;
 
+    uint32_t* adc_calibration_value = malloc(sizeof(uint32_t));
+    adc_calibrate(adc_calibration_value);
+
     int32_t proportional_gain;
     float integral_gain;
     int32_t last_error;
@@ -74,7 +78,7 @@ int main()
     struct controller *controller_ptr = malloc(2*sizeof(int32_t) + 3*sizeof(float));
     //struct controller* controller_ptr = malloc(sizeof(struct controller));
         controller_ptr->proportional_gain = 5;
-        controller_ptr->integral_gain = 0.1;
+        controller_ptr->integral_gain = 500;
         controller_ptr->last_error = 0;
         controller_ptr->error_integral = 0;
         controller_ptr->delta_time = ((float)(delta))/1000;
@@ -90,12 +94,13 @@ int main()
 
     while (1)
     {   
+        solenoid_reset();
         adc_receive(rx_message);
         servo_control(rx_message);
-        //game_counter(game_ptr);
+        game_counter(game_ptr, adc_calibration_value);
         //motor_joystick_control(rx_message);
-        //motor_controller(controller_ptr, rx_message);
-        //motor_controller(rx_message);
+        motor_controller(controller_ptr, rx_message);
+        solenoid_controller(rx_message);
         time_spinFor(msecs(delta));
         //printf("Points: %d", game_ptr->points);
     }

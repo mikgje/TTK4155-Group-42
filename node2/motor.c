@@ -15,12 +15,14 @@
 
 #define max_position 5600
 
+#define max_integral 50000
+
 void motor_init(void) {
     /* Power on PIOB */
     PMC->PMC_PCER0 |= PMC_PCER0_PID13;
     /* Enable PIO to control the corresponding pin */
     PIOC->PIO_PER = PIO_PC23;
-    /* Enable output for P13 */
+    /* Enable output for PC23 */
     PIOC->PIO_OER = PIO_PC23;
 }
 
@@ -99,10 +101,10 @@ void motor_controller(struct controller* controller_ptr, CanMsg* rx_message) {
     error = position_ref - position;
     //controller->error_integral += controller->last_error*controller->delta_time + ((error - controller->last_error)/2)*controller->delta_time;
     controller_ptr->error_integral += error;
-    if (controller_ptr->error_integral > 1000) {
-        controller_ptr->error_integral = 1000;
-    } else if (controller_ptr->error_integral < -1000) {
-        controller_ptr->error_integral = -1000;
+    if (controller_ptr->error_integral > max_integral) {
+        controller_ptr->error_integral = max_integral;
+    } else if (controller_ptr->error_integral < -max_integral) {
+        controller_ptr->error_integral = -max_integral;
     }
     gain = controller_ptr->proportional_gain*error + (controller_ptr->error_integral * controller_ptr->delta_time);
     //gain = controller->proportional_gain*error;

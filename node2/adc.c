@@ -63,3 +63,8 @@ uint32_t adc_read(void) {
     /* Read data, 12 lowest bits, from the ADC last converted data register */
     return (ADC->ADC_LCDR & 0b111111111111);
 }
+
+void adc_calibrate(uint32_t* adc_val) {
+    *adc_val = adc_read();
+    printf("ADC calibrated as: %d\r\n", *adc_val);
+}

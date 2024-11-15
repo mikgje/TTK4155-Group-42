@@ -8,6 +8,6 @@ struct game {
     uint32_t points;
 };
 
-void game_counter(struct game* game_ptr);
+void game_counter(struct game* game_ptr, uint32_t* adc_cal_val);
 
 #endif

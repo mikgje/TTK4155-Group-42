@@ -15,7 +15,10 @@ void servo_control(CanMsg* rx_message) {
     joystick_x = rx_message->byte8.bytes[1];
     duty_cycle = 900 + joystick_x * ((2100 - 900)/255);
     if ((joystick_x > joystick_x_center - dead_band_center) && (joystick_x < joystick_x_center + dead_band_center)) {
+        //printf("Funker\r\n");
         duty_cycle = 1500;
+    } else {
+        //printf("Funker ikke\r\n");
     }
     //printf("Duty cycle: %d\n\r", duty_cycle);
     pwm_set_duty_cycle(duty_cycle);
