@@ -86,37 +86,30 @@ void motor_joystick_control(CanMsg* rx_message) {
 
 void motor_controller(struct controller* controller_ptr, CanMsg* rx_message) {
     uint32_t position_ref, position, direction;
-    int32_t error, gain;
+    int32_t error, input;
     position_ref = 0;
     position = 0;
     direction = 0;
     error = 0;
-    gain = 0;
+    input = 0;
 
-    //printf("Position, PositionRef, Error, ErrorInt, Gain, Direction: %u| %u| %d| %d| %d| %d|\r\n", position, position_ref, error, controller->error_integral, gain, direction);
-    
     position_ref = rx_message->byte8.bytes[3] * max_position/255;
-    //printf("Position: %d\r\n", position_ref);
     position = decoder_read();
     error = position_ref - position;
-    //controller->error_integral += controller->last_error*controller->delta_time + ((error - controller->last_error)/2)*controller->delta_time;
     controller_ptr->error_integral += error;
     if (controller_ptr->error_integral > max_integral) {
         controller_ptr->error_integral = max_integral;
     } else if (controller_ptr->error_integral < -max_integral) {
         controller_ptr->error_integral = -max_integral;
     }
-    gain = controller_ptr->proportional_gain*error + (controller_ptr->error_integral * controller_ptr->delta_time);
-    //gain = controller->proportional_gain*error;
+    input = controller_ptr->proportional_gain*error + (controller_ptr->error_integral * controller_ptr->delta_time);
 
-    if(gain < 0) {
+    if(input < 0) {
         direction = 1;
     } else {
         direction = 0;
     }
-    motor_set_direction_and_speed(direction, abs(gain));
-
-    //printf("Position, PositionRef, Error, ErrorInt, Gain, Direction: %u| %u| %d| %f| %d| %u|\r\n", position, position_ref, error, controller_ptr->error_integral, gain, direction);
+    motor_set_direction_and_speed(direction, abs(input));
 
     controller_ptr->last_error = error;
 }

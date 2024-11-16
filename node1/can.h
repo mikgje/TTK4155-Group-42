@@ -1,3 +1,8 @@
+#include <stdint.h>
+
+#ifndef CAN_H
+#define CAN_H
+
 void can_reset(void);
 uint8_t can_init(void);
 uint8_t can_read(uint8_t address);
@@ -19,3 +24,5 @@ struct can_message {
 
 void can_transmit_message(struct can_message* tx_buffer);
 void can_receive_message(struct can_message* rx_buffer);
+
+#endif

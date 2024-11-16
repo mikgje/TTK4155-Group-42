@@ -1,7 +1,7 @@
 #include <stdint.h>
 
-#define FOSC 4915200UL // clock speed
-#define F_CPU 4915200  // clock speed
+#ifndef OLED_H
+#define OLED_H
 
 void oled_command(uint8_t command);
 void oled_data(char data);
@@ -19,5 +19,23 @@ void oled_draw_word_normal(char* ascii_word);
 void oled_draw_character_small(char ascii_character);
 void oled_draw_word_small(char* ascii_word);
 
-void oled_draw_menu(uint8_t** menu, uint8_t menu_height, uint8_t menu_width);
-uint8_t oled_move_menu(uint8_t** menu, uint8_t menu_height, uint8_t menu_width, uint8_t* adc_values);
+typedef struct {
+    char* option0;
+    char* option1;
+    char* option2;
+    char* option3;
+} options;
+
+struct menu {
+    union {
+        options option_struct;
+        char* option_array[4];
+    };
+    uint8_t current_position;
+};
+
+void oled_draw_menu(struct menu* menu_ptr);
+//void oled_draw_menu(void);
+uint8_t oled_move_menu(struct menu* menu_ptr, uint8_t* adc_values);
+
+#endif

@@ -1,9 +1,8 @@
-#define F_CPU 4915200
-
-#include <util/delay.h>
+#include <stdio.h>
 #include <stdint.h>
 #include <string.h>
 #include "oled.h"
+#include "util.h"
 #include "fonts.h"
 
 #define BASE_OLED_COMMAND_ADDRESS 0x1000
@@ -121,40 +120,40 @@ void oled_draw_word_small(char* ascii_word) {
     }
 }
 
-void oled_draw_menu(uint8_t** menu, uint8_t menu_height, uint8_t menu_width) {
-    for (uint8_t i = 0; i<menu_height; ++i) {
-        oled_set_position(0, i);
-        oled_draw_word_large(menu[i]);
+            /* Start drawing at the position such that the text in center-aligned */
+void oled_draw_menu(struct menu* menu_ptr) {
+    for (uint8_t i = 0; i<(sizeof((menu_ptr->option_struct))/sizeof(char*)); ++i) {
+        //oled_set_position(8*(16 - strlen(menu_ptr->option_array[i]))/2, i);
+        oled_set_position(8, i);
+        oled_draw_word_large(menu_ptr->option_array[i]);
     }
 }
 
-uint8_t oled_move_menu(uint8_t** menu, uint8_t menu_height, uint8_t menu_width, uint8_t* adc_values) {
-    uint8_t current_position = 0;
-    for (uint8_t i = 0; i<menu_height; ++i) {
-        if (menu[i][0] == '>') {
-            current_position = i;
-        }
-    }
-    //printf("Position: %d. Joy: %d\r\n", current_position, adc_values[0]);
+uint8_t oled_move_menu(struct menu* menu_ptr, uint8_t* adc_values) {
     if (adc_values[0] > 180) {
-        if (current_position != 0) {
-            //printf("Valid position: %d. J: %d\r\n", current_position, adc_values[0]);
-            menu[current_position][0] = ' ';
-            current_position -= 1;
-            menu[current_position][0] = '>';
+        if (menu_ptr->current_position > 1) {
+            oled_set_position(0, menu_ptr->current_position);
+            oled_draw_character_large(' ');
+            menu_ptr->current_position -= 1;
+            oled_set_position(0, menu_ptr->current_position);
+            oled_draw_character_large('>');
         }
     } else if (adc_values[0] < 130) {
-        if (current_position != 7) {
-            //printf("Valid position: %d. J: %d\r\n", current_position, adc_values[0]);
-            menu[current_position][0] = ' ';
-            current_position += 1;
-            menu[current_position][0] = '>';
+        if (menu_ptr->current_position < (sizeof((menu_ptr->option_struct))/sizeof(char*) - 1)) {
+            oled_set_position(0, menu_ptr->current_position);
+            oled_draw_character_large(' ');
+            menu_ptr->current_position += 1;
+            oled_set_position(0, menu_ptr->current_position);
+            oled_draw_character_large('>');
         }
+    } else {
+        oled_set_position(0, menu_ptr->current_position);
+        oled_draw_character_large('>');
     }
-    oled_draw_menu(menu, menu_height, menu_width);
-    _delay_ms(50);
-    if (adc_values[4] == 1) {
-        return current_position;
+    /* Bad solution */
+    _delay_ms(100);
+    if (adc_values[4]) {
+        return menu_ptr->current_position;
     } else {
         return 255;
     }

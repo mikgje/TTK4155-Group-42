@@ -1,14 +1,7 @@
-#define F_CPU 4915200
-
 #include <avr/io.h>
-#include <util/delay.h>
 #include <stdint.h>
 #include "spi.h"
 #include "util.h"
-
-#define set_bit(reg, bit) (reg |= (1 << bit))    // set bit
-#define clear_bit(reg, bit) (reg &= ~(1 << bit)) // clear bit
-#define test_bit(reg, bit) (reg & (1 << bit))    // read bit
 
 #define DDRSPI DDRB
 #define DDSCK DDB7
