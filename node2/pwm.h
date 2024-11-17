@@ -32,6 +32,5 @@ typedef struct {
 
 void pwm_init();
 void pwm_set_duty_cycle(uint32_t dc);
-void interupt_timer(uint8_t time);
 
 #endif

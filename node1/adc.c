@@ -8,8 +8,10 @@
 #include "can.h"
 
 uint8_t pwm_init(void) {
-    /* Configure PD5 as output and PB0, PB1 and PD4 as input */
-    /* PD5 is used as a PWM CLK signal */
+    /*
+     * Configure PD5 as output and PB0, PB1 and PD4 as input
+     * PD5 is used as a PWM CLK signal
+     */
     set_bit(DDRD, DDD5);
     /* PD4 is used as a busy signal */
     clear_bit(DDRD, DDD4);

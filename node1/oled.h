@@ -11,7 +11,6 @@ void oled_set_page_address(uint8_t value);
 void oled_set_position(uint8_t column, uint8_t page);
 void oled_clear_screen(void);
 void oled_clear_line(uint8_t page);
-
 void oled_draw_character_large(char ascii_character);
 void oled_draw_word_large(char* ascii_word);
 void oled_draw_character_normal(char ascii_character);
@@ -35,7 +34,6 @@ struct menu {
 };
 
 void oled_draw_menu(struct menu* menu_ptr);
-//void oled_draw_menu(void);
 uint8_t oled_move_menu(struct menu* menu_ptr, uint8_t* adc_values);
 
 #endif

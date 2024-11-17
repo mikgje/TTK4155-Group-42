@@ -1,3 +1,5 @@
+#include <stdint.h>
+#include <stdio.h>
 #include "decoder.h"
 #include "sam.h"
 
@@ -5,13 +7,16 @@
 
 /* TC channel control register */
 #define CLKEN 1
-#define SWTRG 1 // Maybe possible 0?
+#define SWTRG 1 /* Maybe possible 0? */
+
 /* TC channel mode register */
 #define TCCLKS 5
+
 /* TC block mode register */
 #define QDEN 1
 #define POSEN 1
-#define EDGPHA 1 // Maybe possible 0?
+#define EDGPHA 1 /* Maybe possible 0? */
+
 /* TC write protection mode register */
 #define WPKEY 0x54494D
 

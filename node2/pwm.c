@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include "pwm.h"
 #include "sam.h"
 
@@ -73,8 +74,4 @@ void pwm_set_duty_cycle(uint32_t dc) {
     } else {
         PWM->PWM_CH1.PWM_CDTY = dc;
     }
-}
-
-void interupt_timer(uint8_t time){
-    /* Activate timer */
 }

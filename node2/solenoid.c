@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include "solenoid.h"
 #include "sam.h"
 #include "time.h"
@@ -21,8 +22,9 @@ void solenoid_reset(void) {
     PIOC->PIO_SODR = PIO_PC24;
 }
 
-void solenoid_controller(CanMsg* rx_message) {
+void solenoid_control(CanMsg* rx_message) {
     uint32_t button;
+    /* Retrieve the button value */
     button = rx_message->byte8.bytes[4];
     if (button) {
         solenoid_fire();

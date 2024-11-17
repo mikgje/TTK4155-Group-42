@@ -30,6 +30,11 @@
 #define NAME_2 "Ole Helmers"
 #define NAME_3 ""
 
+#define PLAY_NAME "Ping Pong"
+#define COUNTER_1 ""
+#define COUNTER_2 "Points:  "
+#define COUNTER_3 ""
+
 int main(void) {
     uart_init(MYUBRR);
     xmem_init();
@@ -41,7 +46,8 @@ int main(void) {
     fdevopen((int(*) (char, FILE*))&uart_transmit, (int(*) (FILE*))&uart_receive);
 
     uint8_t* adc_values = malloc(6*sizeof(uint8_t));
-    uint8_t* xy_saturation = malloc(4*sizeof(uint8_t)); /* in order: x_min, x_max, y_min, y_max */
+    /* In order: x_min, x_max, y_min, y_max */
+    uint8_t* xy_saturation = malloc(4*sizeof(uint8_t));
 
     oled_clear_screen();
 
@@ -73,7 +79,22 @@ int main(void) {
     credits_ptr->option_struct.option1 = credits_option1;
     credits_ptr->option_struct.option2 = credits_option2;
     credits_ptr->option_struct.option3 = credits_option3;
-    credits_ptr->current_position = 1;
+    credits_ptr->current_position = 0;
+
+    char* play_counter0 = malloc(sizeof(PLAY_NAME));
+    char* play_counter1 = malloc(sizeof(COUNTER_1));
+    char* play_counter2 = malloc(sizeof(COUNTER_2));
+    char* play_counter3 = malloc(sizeof(COUNTER_3));
+    play_counter0 = PLAY_NAME;
+    play_counter1 = COUNTER_1;
+    play_counter2 = COUNTER_2;
+    play_counter3 = COUNTER_3;
+    struct menu* play_ptr = malloc(sizeof(struct menu));
+    play_ptr->option_struct.option0 = play_counter0;
+    play_ptr->option_struct.option1 = play_counter1;
+    play_ptr->option_struct.option2 = play_counter2;
+    play_ptr->option_struct.option3 = play_counter3;
+    play_ptr->current_position = 0;
 
     can_config();
     can_configure_transmit();
@@ -114,7 +135,7 @@ int main(void) {
 
     game_init(menu_ptr);
     while(1) {
-        game(game_ptr, menu_ptr, credits_ptr, adc_values, xy_saturation, can_tx_buffer);
+        game(game_ptr, menu_ptr, play_ptr, credits_ptr, adc_values, xy_saturation, can_tx_buffer, can_rx_buffer);
         _delay_ms(20);
     }
 }

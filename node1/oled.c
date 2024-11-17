@@ -120,17 +120,18 @@ void oled_draw_word_small(char* ascii_word) {
     }
 }
 
-            /* Start drawing at the position such that the text in center-aligned */
 void oled_draw_menu(struct menu* menu_ptr) {
     for (uint8_t i = 0; i<(sizeof((menu_ptr->option_struct))/sizeof(char*)); ++i) {
-        //oled_set_position(8*(16 - strlen(menu_ptr->option_array[i]))/2, i);
+        /* Draw menu with the first column empty, to accommodate for the cursor */
         oled_set_position(8, i);
         oled_draw_word_large(menu_ptr->option_array[i]);
     }
 }
 
 uint8_t oled_move_menu(struct menu* menu_ptr, uint8_t* adc_values) {
+    /* Check if the joystick is pointing up */
     if (adc_values[0] > 180) {
+        /* If not already at the top option, move the cursor */
         if (menu_ptr->current_position > 1) {
             oled_set_position(0, menu_ptr->current_position);
             oled_draw_character_large(' ');
@@ -138,7 +139,9 @@ uint8_t oled_move_menu(struct menu* menu_ptr, uint8_t* adc_values) {
             oled_set_position(0, menu_ptr->current_position);
             oled_draw_character_large('>');
         }
+    /* or if the joystick is pointing down */
     } else if (adc_values[0] < 130) {
+        /* If not at the bottom option, move the cursor */
         if (menu_ptr->current_position < (sizeof((menu_ptr->option_struct))/sizeof(char*) - 1)) {
             oled_set_position(0, menu_ptr->current_position);
             oled_draw_character_large(' ');
@@ -150,10 +153,12 @@ uint8_t oled_move_menu(struct menu* menu_ptr, uint8_t* adc_values) {
         oled_set_position(0, menu_ptr->current_position);
         oled_draw_character_large('>');
     }
-    /* Bad solution */
+    /* A delay can be used to make the cursor movement slower. This is a dumb solution. */
     _delay_ms(100);
+    /* If the left button is pressed, return the selected option */
     if (adc_values[4]) {
         return menu_ptr->current_position;
+    /* else return a non-used option */
     } else {
         return 255;
     }

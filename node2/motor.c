@@ -27,40 +27,49 @@ void motor_init(void) {
 }
 
 void motor_set_duty_cycle(int32_t duty_cycle) {
+    /* Set a maximum value */
     if (duty_cycle > 20000) {
         duty_cycle = 20000;
+    /* and a minimum value */
     } else if (duty_cycle < 0) {
         duty_cycle = 0;
     }
-
     PWM->PWM_CH0.PWM_CDTY = duty_cycle;   
 }
 
 uint32_t motor_joystick_control_duty_cycle(uint32_t joystick_val) {
     uint32_t dc;
+    /* Set all values in the lower dead band equal to 0 */
     if (joystick_val < dead_band_edge) {
         joystick_val = 0;
+    /* and all values in the higher dead band to 255 */
     } else if (joystick_val > (255 - dead_band_edge)) {
         joystick_val = 255;
     }
-
+    /* Check if the joystick is inside the lower valid zone */
     if (joystick_val < (joystick_y_center - dead_band_center)) {
         dc = 20000 * (1 - ((float)joystick_val)/(255/2));
+        /* Set a maximum value */
         if (dc > 20000) {
             dc = 20000;
+        /* and a minimum value */
         } else if (dc < 2000) {
             dc = 0;
         }
+    /* Check if the joysticke is inside the higher valid zone */
     } else if (joystick_val > (joystick_y_center + dead_band_center)) {
         dc = 20000 * (((float)joystick_val)/(255/2) - 1);
+        /* Set a maximum value */
         if (dc > 20000) {
             dc = 20000;
+        /* and a minimum value */
         } else if (dc < 2000) {
             dc = 0;
         }
     } else {
         dc = 0;
     }
+    
     return dc;
 }
 

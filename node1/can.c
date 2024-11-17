@@ -82,9 +82,7 @@
 void can_reset(void) {
     /* Reset MCP2515 */
     clear_bit(SPI,PINSS);
-    
     spi_transmit(RESET);
-    
     set_bit(SPI, PINSS);
 }
 
@@ -96,23 +94,23 @@ uint8_t can_init(void) {
     can_reset();
     if ((can_read(0b00001110) & 0b11100000) != 0b10000000) {
         printf("MCP2515 is not in config mode after reset\r\n");  
-	
-	return 1;
+
+	    return 1;
     } 
-    
+
     return 0;
 }
 
 uint8_t can_read(uint8_t address) { 
     uint8_t retval;
     clear_bit(SPI, PINSS);
-    
+
     /* Transmit instruction */
     spi_transmit(READ);
     /* Transmit address */
     spi_transmit(address);
     retval = spi_receive();
-    
+
     set_bit(SPI, PINSS);
 
     return retval;
@@ -215,16 +213,20 @@ void can_configure_filters_and_masks(void) {
 }
 
 void can_set_loopback(void){
-    /* Set CANCTRL relevant register to 010, i.e. Loopback mode */
-    /* Set TXB0's CANCTRL to Loopback mode */
+    /* 
+     * Set CANCTRL relevant register to 010, i.e. Loopback mode
+     * Set TXB0's CANCTRL to Loopback mode
+     */
     can_bit_modify(TXB0CANCTRL, 0b11100000, 0b01000000);
     /* Set RXB0's CANCTRL to Loopback mode */
     can_bit_modify(RXB0CANCTRL, 0b11100000, 0b01000000);
 }
 
 void can_set_normal(void) {
-    /* Set CANCTRL relevant register to 000, i.e. Normal mode */
-    /* Set TXB0's CANCTRL to Normal mode */
+    /*
+     * Set CANCTRL relevant register to 000, i.e. Normal mode
+     * Set TXB0's CANCTRL to Normal mode
+     */
     can_bit_modify(TXB0CANCTRL, 0b11100000, 0b00000000);
     /* Set RXB0's CANCTRL to Normal mode */
     can_bit_modify(RXB0CANCTRL, 0b11100000, 0b00000000);
@@ -242,8 +244,10 @@ void can_transmit_message(struct can_message* tx_buffer) {
     can_write((tx_buffer->buffer_start_address)+11, tx_buffer->data5);
     can_write((tx_buffer->buffer_start_address)+12, tx_buffer->data6);
     can_write((tx_buffer->buffer_start_address)+13, tx_buffer->data7);
-    /* Request to send TXB0 */
-    /* Set TXB0CTRL.TXREQ = 1 */
+    /* 
+     * Request to send TXB0
+     * Set TXB0CTRL.TXREQ = 1
+     */
     can_bit_modify(TXB0CTRL, 0b00001000, 0b00001000);
     /* Mark only TXB0 for RTS */
     can_request_to_send(1, 0, 0);

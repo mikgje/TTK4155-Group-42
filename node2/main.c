@@ -12,6 +12,7 @@
 #include "game.h"
 #include "decoder.h"
 #include "motor.h"
+#include "solenoid.h"
 
 #define BAUDRATE 9600
 #define F_CPU 84000000
@@ -50,17 +51,17 @@ int main()
     motor_init();
     solenoid_init();
 
-    CanMsg m = (CanMsg) {
+    CanMsg tx_message = (CanMsg) {
        .id = 1,
        .length = 8,
-       .byte8.bytes[0] = 1,
-       .byte8.bytes[1] = 2,
-       .byte8.bytes[2] = 3,
-       .byte8.bytes[3] = 42,
-       .byte8.bytes[4] = 19,
-       .byte8.bytes[5] = 100,
-       .byte8.bytes[6] = 200,
-       .byte8.bytes[7] = 53,
+       .byte8.bytes[0] = 0,
+       .byte8.bytes[1] = 0,
+       .byte8.bytes[2] = 0,
+       .byte8.bytes[3] = 0,
+       .byte8.bytes[4] = 0,
+       .byte8.bytes[5] = 0,
+       .byte8.bytes[6] = 0,
+       .byte8.bytes[7] = 0,
    };
 
     CanMsg* rx_message = malloc(sizeof(CanMsg));
@@ -76,58 +77,21 @@ int main()
     float error_integral;
     float delta_time;
     struct controller *controller_ptr = malloc(2*sizeof(int32_t) + 3*sizeof(float));
-    //struct controller* controller_ptr = malloc(sizeof(struct controller));
         controller_ptr->proportional_gain = 5;
         controller_ptr->integral_gain = 500;
         controller_ptr->last_error = 0;
         controller_ptr->error_integral = 0;
         controller_ptr->delta_time = ((float)(delta))/1000;
 
-    /*
-    printf("ÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆ: %d %.6f %d %.6f %.6f\r\n",
-    controller_ptr->proportional_gain,
-    controller_ptr->integral_gain,
-    controller_ptr->last_error,
-    controller_ptr->error_integral,
-    controller_ptr->delta_time);
-    */
-
     while (1)
     {   
         solenoid_reset();
-        adc_receive(rx_message);
+        can_rx(rx_message);
         servo_control(rx_message);
-        game_counter(game_ptr, adc_calibration_value);
-        //motor_joystick_control(rx_message);
+        tx_message.byte8.bytes[0] = game_counter(game_ptr, adc_calibration_value);
+        can_tx(tx_message);
         motor_controller(controller_ptr, rx_message);
-        solenoid_controller(rx_message);
+        solenoid_control(rx_message);
         time_spinFor(msecs(delta));
-        //printf("Points: %d", game_ptr->points);
     }
 }
-
-/*
- * MCK = 84MHz
- * CAN baudrate = 125 kbit/s -> bit time = 8us
- * Delay of the bus driver: 50ns
- * Delay of the receiver: 30ns
- * Delay of the bus line (20m): 110ns
- *
- * The total number of time quanta in a bit time must be comprised between 8 and 25. Bit time has been chosen in MCP2515 as 16.
- * TQ = T_CSC = 500ns -> for node 2: BRP = 500ns*84MHz - 1 = 41
- */
-
-
-// /* Power on PIOB */
-// PMC->PMC_PCER0 |= PMC_PCER0_PID12;
-// /* Enable PIO to control the corresponding pin */
-// PIOB->PIO_PER = PIO_PB13;
-// /* Enable output for P13 */
-// PIOB->PIO_OER = PIO_PB13;
-
-//     /* Set output data register */
-// PIOB->PIO_SODR = PIO_PB13;
-// time_spinFor(msecs(200));
-// /* Clear output data register */
-// PIOB->PIO_CODR = PIO_PB13; 
-// time_spinFor(msecs(200));
